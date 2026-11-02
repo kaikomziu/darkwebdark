@@ -9,7 +9,7 @@
   'use strict';
 
   // ---- バージョン情報（更新したら必ずここと CHANGELOG を更新する） ----
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
   var UPDATED = '2026-11-02';
 
   var DWD = (window.DWD = { VERSION: VERSION, UPDATED: UPDATED });
@@ -47,11 +47,99 @@
     DWD.set(k, v);
     return v;
   };
-  DWD.reset = function () {
-    memory = {};
+  // 進行状況を消す。RTA解放・ベストタイム・名前は残す（all=true なら全部消す）
+  var KEEP = ['rtaUnlocked', 'rtaBest', 'rtaPending', 'name'];
+  DWD.reset = function (all) {
+    var old = DWD.load();
+    var next = {};
+    if (!all) {
+      KEEP.forEach(function (k) {
+        if (old[k] !== undefined) next[k] = old[k];
+      });
+    }
+    memory = next;
     try {
       localStorage.removeItem(KEY);
     } catch (e) {}
+    DWD.save(next);
+  };
+
+  /* ---------------------------------------------------------
+   * RTAモード（1回クリアで解放）
+   * rta = { start: ミリ秒, end: ミリ秒 | undefined }
+   * ------------------------------------------------------- */
+  DWD.fmt = function (ms) {
+    ms = Math.max(0, Math.floor(ms));
+    var m = Math.floor(ms / 60000);
+    var s = Math.floor((ms % 60000) / 1000);
+    var cs = Math.floor((ms % 1000) / 10);
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + '.' + (cs < 10 ? '0' : '') + cs;
+  };
+  DWD.rtaRunning = function () {
+    var r = DWD.get('rta');
+    return !!(r && r.start && !r.end);
+  };
+  DWD.rtaStart = function () {
+    DWD.reset();
+    DWD.set('rta', { start: Date.now() });
+  };
+  // 計測終了。タイム（ミリ秒）を返す
+  DWD.rtaStop = function () {
+    var r = DWD.get('rta');
+    if (!r || !r.start || r.end) return null;
+    r.end = Date.now();
+    DWD.set('rta', r);
+    var ms = r.end - r.start;
+    var best = DWD.get('rtaBest');
+    if (!best || ms < best) DWD.set('rtaBest', ms);
+    DWD.set('rtaPending', ms);
+    return ms;
+  };
+  DWD.rtaAbort = function () {
+    DWD.set('rta', null);
+  };
+
+  // 画面右上のタイマー表示
+  function rtaHud() {
+    if (!DWD.rtaRunning()) return;
+    var hud = document.createElement('div');
+    hud.className = 'dwd-rta';
+    hud.innerHTML = '<span class="t-label">RTA</span><span class="t-time">00:00.00</span><button type="button" class="t-quit">中断</button>';
+    document.body.appendChild(hud);
+    var t = hud.querySelector('.t-time');
+    var quit = hud.querySelector('.t-quit');
+    var armed = false;
+    quit.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!armed) {
+        armed = true;
+        quit.textContent = 'もう一度押すと中断';
+        setTimeout(function () {
+          armed = false;
+          quit.textContent = '中断';
+        }, 3000);
+        return;
+      }
+      DWD.rtaAbort();
+      DWD.set('cleared', true);
+      location.href = DWD.root() + 'index.html';
+    });
+    (function loop() {
+      var r = DWD.get('rta');
+      if (!r || !r.start) {
+        hud.remove();
+        return;
+      }
+      t.textContent = DWD.fmt((r.end || Date.now()) - r.start);
+      if (r.end) hud.classList.add('done');
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  // サイトのいちばん上（index.html のある場所）への相対パス
+  DWD.root = function () {
+    var s = document.querySelector('script[src$="assets/dwd.js"]');
+    return s ? s.getAttribute('src').replace(/assets\/dwd\.js$/, '') : '';
   };
 
   /* ---------------------------------------------------------
@@ -528,7 +616,11 @@
     '.dwd-gate button{background:none;border:1px solid #a00;color:#e22;padding:16px 38px;font:inherit;font-size:18px;letter-spacing:.4em;cursor:pointer;min-width:200px;animation:dwdPulse 2s ease-in-out infinite}' +
     '.dwd-gate .g-warn{font-size:12px;color:#555;line-height:1.8}' +
     '@keyframes dwdPulse{0%,100%{box-shadow:0 0 0 #f000}50%{box-shadow:0 0 24px #f004}}' +
-    '.dwd-ver{font:11px/1.6 "Courier New",monospace;opacity:.55;text-align:center;padding:14px 8px}';
+    '.dwd-ver{font:11px/1.6 "Courier New",monospace;opacity:.55;text-align:center;padding:14px 8px}' +
+    '.dwd-rta{position:fixed;z-index:99980;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.82);color:#ffd36a;border:1px solid #7a5a10;border-radius:6px;padding:4px 6px 4px 10px;font:600 15px/1.4 "Courier New",monospace;font-variant-numeric:tabular-nums;letter-spacing:.04em}' +
+    '.dwd-rta .t-label{font-size:10px;color:#c9a040;letter-spacing:.2em}' +
+    '.dwd-rta .t-quit{font:inherit;font-size:11px;background:none;border:1px solid #5a4410;color:#c9a040;border-radius:4px;padding:2px 6px;cursor:pointer}' +
+    '.dwd-rta.done{color:#7dff9a;border-color:#2a7a3a}';
   var st = document.createElement('style');
   st.textContent = css;
   (document.head || document.documentElement).appendChild(st);
@@ -994,5 +1086,6 @@
     DWD.$$('[data-dwd-ver]').forEach(function (el) {
       DWD.footer(el, el.getAttribute('data-dwd-ver') || undefined);
     });
+    rtaHud();
   });
 })();

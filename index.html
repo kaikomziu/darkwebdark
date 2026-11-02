@@ -76,6 +76,139 @@
 
   var main = document.getElementById('posts');
 
+  /* -------- RTAモード＋オンラインランキング（1回クリアで解放） -------- */
+  function rtaCard() {
+    var box = document.createElement('section');
+    box.className = 'card rta-card';
+    box.id = 'rank';
+    var best = DWD.get('rtaBest');
+    var pending = DWD.get('rtaPending');
+    box.innerHTML =
+      '<h3 class="rta-h">RTAモード</h3>' +
+      '<p class="small" style="margin:0 0 10px">ブログ1記事目から脱出まで、どれだけ速くクリアできるか。タイマーは「RTA開始」を押した瞬間から、最深部の「そとへ」を押すまで計測されます。</p>' +
+      '<div class="rta-row"><button type="button" class="rta-btn" id="rtaStart">RTA開始</button>' +
+      '<span class="small">自己ベスト <b class="rta-num" id="rtaBest">' + (best ? DWD.fmt(best) : '--:--.--') + '</b></span></div>' +
+      '<form id="rtaForm" class="rta-form" hidden>' +
+      '<p style="margin:0 0 6px">登録できるタイム：<b class="rta-num" id="rtaPend"></b></p>' +
+      '<div class="comment-form" style="margin:0"><input id="rtaName" maxlength="12" placeholder="ランキングに出す名前" autocomplete="nickname"><button id="rtaSend">登録</button></div>' +
+      '</form>' +
+      '<p class="small" id="rtaMsg" style="margin:8px 0 0;min-height:1.4em"></p>' +
+      '<h3 class="rta-h" style="margin-top:14px">オンラインランキング</h3>' +
+      '<ol class="rta-list" id="rtaList"><li class="small">読み込み中…</li></ol>';
+    main.insertBefore(box, main.firstChild);
+
+    document.getElementById('rtaStart').addEventListener('click', function () {
+      DWD.rtaStart();
+      location.href = 'index.html';
+    });
+    if (pending) {
+      document.getElementById('rtaForm').hidden = false;
+      document.getElementById('rtaPend').textContent = DWD.fmt(pending);
+      document.getElementById('rtaName').value = (DWD.get('name') || '').slice(0, 12);
+    }
+    if (location.hash === '#rank') setTimeout(function () { box.scrollIntoView({ block: 'start' }); }, 50);
+    initRanking();
+  }
+
+  function initRanking() {
+    var list = document.getElementById('rtaList');
+    var msg = document.getElementById('rtaMsg');
+    var form = document.getElementById('rtaForm');
+    function offline(text) {
+      list.innerHTML = '';
+      var li = document.createElement('li');
+      li.className = 'small';
+      li.textContent = text;
+      list.appendChild(li);
+      if (!form.hidden) {
+        document.getElementById('rtaSend').disabled = true;
+      }
+    }
+    // claude.ai の公開ページ上でだけ使える共有データベースを使う
+    var tries = 0;
+    (function waitClaude() {
+      if (window.claude && typeof window.claude.use === 'function') return connect();
+      if (++tries > 30) return offline('オンラインランキングは、claude.ai の公開ページで開いたときだけ使えます。');
+      setTimeout(waitClaude, 100);
+    })();
+
+    function connect() {
+      Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (r) {
+        var db = r[0], user = r[1];
+        if (!db) return offline('ランキングを読み込めませんでした（claude.ai にサインインすると表示されます）。');
+        return (user ? user.id() : Promise.resolve(null)).then(function (uid) {
+          var loading = setTimeout(function () {
+            if (list.querySelector('li.small')) offline('ランキングにまだ接続できません。しばらくしてから開き直してください。');
+          }, 10000);
+          db.collection('rta').orderBy('ms').limit(50).onSnapshot(function (snap) {
+            if (!snap.metadata.fromCache) clearTimeout(loading);
+            list.innerHTML = '';
+            var rank = 0;
+            snap.docs.forEach(function (d) {
+              var v = d.data() || {};
+              if (typeof v.ms !== 'number' || typeof v.name !== 'string') return;
+              rank++;
+              var li = document.createElement('li');
+              if (uid && d.id === uid) li.className = 'me';
+              var n = document.createElement('span');
+              n.className = 'rta-rank';
+              n.textContent = rank + '位';
+              var nm = document.createElement('span');
+              nm.className = 'rta-who';
+              nm.textContent = v.name.slice(0, 12) + (uid && d.id === uid ? '（あなた）' : '');
+              var t = document.createElement('b');
+              t.className = 'rta-num';
+              t.textContent = DWD.fmt(v.ms);
+              li.appendChild(n); li.appendChild(nm); li.appendChild(t);
+              list.appendChild(li);
+            });
+            if (!rank) offline('まだ記録がありません。最初の記録を残そう。');
+          }, function () {
+            clearTimeout(loading);
+            offline('ランキングを読み込めませんでした。');
+          });
+
+          if (!uid) {
+            document.getElementById('rtaSend').disabled = true;
+            if (!form.hidden) msg.textContent = 'ランキングに登録するには claude.ai へのサインインが必要です。';
+            return;
+          }
+          var sending = false;
+          form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (sending) return;
+            var ms = DWD.get('rtaPending');
+            var name = document.getElementById('rtaName').value.trim().slice(0, 12);
+            if (!name) { msg.textContent = '名前を入れてください。'; return; }
+            if (typeof ms !== 'number' || ms < 30000 || ms > 3 * 3600000) { msg.textContent = 'このタイムは登録できません。'; return; }
+            sending = true;
+            msg.textContent = '登録中…';
+            var ref = db.doc('rta/' + uid);
+            ref.get().then(function (cur) {
+              var old = cur.exists ? cur.data() : null;
+              if (old && typeof old.ms === 'number' && old.ms <= ms) {
+                msg.textContent = '登録済みのタイム（' + DWD.fmt(old.ms) + '）の方が速いので、そのままにしました。';
+                return;
+              }
+              return ref.set({ name: name, ms: ms, at: new Date().toISOString(), ver: DWD.VERSION }).then(function () {
+                msg.textContent = '登録しました！';
+              });
+            }).then(function () {
+              DWD.set('rtaPending', null);
+              form.hidden = true;
+            }).catch(function (err) {
+              msg.textContent = err && err.code === 'invalid_argument'
+                ? 'この共有設定では登録できません（閲覧のみの権限です）。'
+                : '登録できませんでした。時間をおいてもう一度試してください。';
+            }).then(function () { sending = false; });
+          });
+        });
+      }).catch(function () {
+        offline('ランキングを読み込めませんでした。');
+      });
+    }
+  }
+
   function render(list) {
     main.innerHTML = '';
     list.forEach(function (p) {
@@ -127,6 +260,7 @@
       DWD.reset();
       location.href = 'index.html';
     });
+    rtaCard();
     return;
   }
 
@@ -196,6 +330,7 @@
 
   /* -------- 通常（だんだん不気味に） -------- */
   render(POSTS);
+  if (DWD.get('rtaUnlocked') && !DWD.rtaRunning()) rtaCard();
   if (read >= 3) document.body.classList.add('stage-3');
   if (read >= 4) document.body.classList.add('stage-4');
   if (read >= 5) document.body.classList.add('stage-5');

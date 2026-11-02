@@ -164,6 +164,27 @@ body.blood .nav a, body.blood .pager a { background: var(--paper); color: #f55; 
 
 .hidden { display: none !important; }
 
+/* RTAモード・ランキング */
+.rta-card { border-color: #c9a040; }
+.rta-h { margin: 0 0 8px; font-size: 16px; letter-spacing: .08em; }
+.rta-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.rta-btn {
+  font: inherit; font-size: 16px; font-weight: bold; padding: 10px 22px; border-radius: 10px; border: 0;
+  background: #2b2116; color: #ffd36a; cursor: pointer; letter-spacing: .1em;
+}
+.rta-btn:focus-visible, .rta-form button:focus-visible { outline: 3px solid #c9a040; outline-offset: 2px; }
+.rta-num { font-family: "Courier New", monospace; font-variant-numeric: tabular-nums; }
+.rta-form { margin-top: 12px; }
+.rta-form button[disabled] { opacity: .5; cursor: default; }
+.rta-list { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.rta-list li { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-top: 1px dashed var(--line); }
+.rta-list li:first-child { border-top: 0; }
+.rta-list .rta-rank { width: 3.2em; color: var(--sub); flex: none; }
+.rta-list .rta-who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rta-list li.me { font-weight: bold; color: #b07a10; }
+body.blood .rta-card { border-color: #7a5a10; }
+body.blood .rta-list li.me { color: #ffd36a; }
+
 .toast {
   position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
   background: #fff; border: 2px solid var(--accent); color: var(--ink);

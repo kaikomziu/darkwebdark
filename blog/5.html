@@ -64,7 +64,9 @@
       return;
     }
     ps[i++].style.opacity = 1;
-    setTimeout(next, i > 9 ? 1500 : 1100);
+    // RTA中は少しだけ早く表示する
+    var f = DWD.rtaRunning() ? 0.45 : 1;
+    setTimeout(next, (i > 9 ? 1500 : 1100) * f);
   })();
 
   var btn = document.getElementById('knockBtn');

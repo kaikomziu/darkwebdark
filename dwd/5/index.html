@@ -179,10 +179,13 @@
     ex.classList.remove('hidden');
     ex.addEventListener('click', function () {
       if (drone) drone.stop();
+      var rtaMs = DWD.rtaStop(); // RTA中ならここでタイム確定
       DWD.set('escaped', true);
       var w = document.createElement('div');
       w.className = 'white';
-      w.innerHTML = '<h2>脱出成功</h2><p>DarkWebDark から　ぬけだした。</p><p style="font-size:13px;color:#888">表の世界へ　もどります…</p>';
+      w.innerHTML = '<h2>脱出成功</h2><p>DarkWebDark から　ぬけだした。</p>' +
+        (rtaMs !== null ? '<p style="font:700 28px \'Courier New\',monospace;color:#1a7a3a;margin:4px 0">' + DWD.fmt(rtaMs) + '</p>' : '') +
+        '<p style="font-size:13px;color:#888">表の世界へ　もどります…</p>';
       document.body.appendChild(w);
       DWD.sfx.chime();
       setTimeout(function () { location.href = '../../index.html'; }, 3600);

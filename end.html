@@ -25,7 +25,9 @@
   <p class="msg red">ノックが　きこえても　こたえないで</p>
   <p class="msg dim" style="margin-top:20px">— END —</p>
   <div class="stats" id="stats"></div>
+  <div class="stats" id="rtaBox"></div>
   <div class="btns" id="btns">
+    <a class="btn" href="index.html#rank" id="rankBtn" style="border-color:#7a5a10;color:#ffd36a">RTAモード・ランキング</a>
     <button class="btn" id="again" type="button">さいしょから</button>
     <a class="btn" href="index.html">ブログへ</a>
   </div>
@@ -37,6 +39,20 @@
   'use strict';
   DWD.noiseBg(0.04);
   DWD.set('cleared', true);
+  // 1回クリアで RTAモード解放
+  var firstUnlock = !DWD.get('rtaUnlocked');
+  DWD.set('rtaUnlocked', true);
+  var rta = DWD.get('rta');
+  var rtaBox = document.getElementById('rtaBox');
+  if (rta && rta.start && rta.end) {
+    var ms = rta.end - rta.start;
+    rtaBox.innerHTML = '<span style="color:#ffd36a;font-size:15px">RTA タイム　<b style="font-size:24px">' + DWD.fmt(ms) + '</b></span><br>' +
+      (DWD.get('rtaBest') === ms ? '<span style="color:#7dff9a">自己ベスト更新！</span>' : '自己ベスト：' + DWD.fmt(DWD.get('rtaBest')));
+    document.getElementById('rankBtn').textContent = 'ランキングに登録する';
+    DWD.set('rta', null); // 計測完了。表示用のタイムは rtaPending に残る
+  } else if (firstUnlock) {
+    rtaBox.innerHTML = '<span style="color:#ffd36a">— RTAモード が 解放されました —</span>';
+  }
   var name = DWD.get('name') || 'あなた';
   document.getElementById('you').textContent = 'そして　' + name + '　は　203号室に　すんでいる';
   document.getElementById('stats').innerHTML =
@@ -49,6 +65,7 @@
   (function next() {
     if (i >= ms.length) {
       document.getElementById('stats').classList.add('on');
+      rtaBox.classList.add('on');
       document.getElementById('btns').classList.add('on');
       return;
     }
