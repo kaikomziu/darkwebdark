@@ -110,105 +110,186 @@
     initRanking();
   }
 
+  // ランキングの保存先
+  //  - GitHub Pages などふつうのWebサイト → Supabase（組織外の人も登録できる）
+  //  - claude.ai の公開ページ（外部への通信が禁止）→ claude の共有データベース
+  var SB_URL = 'https://kifnzvktwbomxthzvvgy.supabase.co';
+  // anonキー：公開サイトに載せる前提の読み取り用キー（書き込みは関数経由のみ）
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZm56dmt0d2JvbXh0aHp2dmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzgxMzgsImV4cCI6MjA5MzQxNDEzOH0.M7nXP-u--6J_6rRpgz1cJj21_7KX6MtfTmZy77Xf_IE';
+  function rankBackend() {
+    var h = location.hostname;
+    if (location.protocol === 'file:') return 'none';
+    if (/(^|\.)github\.io$/.test(h) || h === 'localhost' || h === '127.0.0.1') return 'supabase';
+    return 'claude';
+  }
+
   function initRanking() {
     var list = document.getElementById('rtaList');
     var msg = document.getElementById('rtaMsg');
     var form = document.getElementById('rtaForm');
-    function offline(text) {
+    var sendBtn = document.getElementById('rtaSend');
+
+    function note(text) {
       list.innerHTML = '';
       var li = document.createElement('li');
       li.className = 'small';
       li.textContent = text;
       list.appendChild(li);
-      if (!form.hidden) {
-        document.getElementById('rtaSend').disabled = true;
-      }
     }
-    // claude.ai の公開ページ上でだけ使える共有データベースを使う
-    var tries = 0;
-    (function waitClaude() {
-      if (window.claude && typeof window.claude.use === 'function') return connect();
-      if (++tries > 30) return offline('オンラインランキングは、claude.ai の公開ページで開いたときだけ使えます。');
-      setTimeout(waitClaude, 100);
-    })();
-
-    function connect() {
-      Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (r) {
-        var db = r[0], user = r[1];
-        if (!db) return offline('ランキングを読み込めませんでした（claude.ai にサインインすると表示されます）。');
-        return (user ? user.id() : Promise.resolve(null)).then(function (uid) {
-          var loading = setTimeout(function () {
-            if (list.querySelector('li.small')) offline('ランキングにまだ接続できません。しばらくしてから開き直してください。');
-          }, 10000);
-          db.collection('rta').orderBy('ms').limit(50).onSnapshot(function (snap) {
-            if (!snap.metadata.fromCache) clearTimeout(loading);
-            list.innerHTML = '';
-            var rank = 0;
-            snap.docs.forEach(function (d) {
-              var v = d.data() || {};
-              if (typeof v.ms !== 'number' || typeof v.name !== 'string') return;
-              rank++;
-              var li = document.createElement('li');
-              if (uid && d.id === uid) li.className = 'me';
-              var n = document.createElement('span');
-              n.className = 'rta-rank';
-              n.textContent = rank + '位';
-              var nm = document.createElement('span');
-              nm.className = 'rta-who';
-              nm.textContent = v.name.slice(0, 12) + (uid && d.id === uid ? '（あなた）' : '');
-              var t = document.createElement('b');
-              t.className = 'rta-num';
-              t.textContent = DWD.fmt(v.ms);
-              li.appendChild(n); li.appendChild(nm); li.appendChild(t);
-              list.appendChild(li);
-            });
-            if (!rank) offline('まだ記録がありません。最初の記録を残そう。');
-          }, function () {
-            clearTimeout(loading);
-            offline('ランキングを読み込めませんでした。');
-          });
-
-          if (!uid) {
-            document.getElementById('rtaSend').disabled = true;
-            if (!form.hidden) msg.textContent = 'ランキングに登録するには claude.ai へのサインインが必要です。';
-            return;
-          }
-          var sending = false;
-          form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            if (sending) return;
-            var ms = DWD.get('rtaPending');
-            var name = document.getElementById('rtaName').value.trim().slice(0, 12);
-            if (!name) { msg.textContent = '名前を入れてください。'; return; }
-            if (typeof ms !== 'number' || ms < 30000 || ms > 3 * 3600000) { msg.textContent = 'このタイムは登録できません。'; return; }
-            sending = true;
-            msg.textContent = '登録中…';
-            var ref = db.doc('rta/' + uid);
-            ref.get().then(function (cur) {
-              var old = cur.exists ? cur.data() : null;
-              if (old && typeof old.ms === 'number' && old.ms <= ms) {
-                msg.textContent = '登録済みのタイム（' + DWD.fmt(old.ms) + '）の方が速いので、そのままにしました。';
-                return;
-              }
-              return ref.set({ name: name, ms: ms, at: new Date().toISOString(), ver: DWD.VERSION }).then(function () {
-                msg.textContent = '登録しました！';
-              });
-            }).then(function () {
-              DWD.set('rtaPending', null);
-              form.hidden = true;
-            }).catch(function (err) {
-              msg.textContent = err && err.code === 'invalid_argument'
-                ? 'この共有設定では登録できません（閲覧のみの権限です）。'
-                : '登録できませんでした。時間をおいてもう一度試してください。';
-            }).then(function () { sending = false; });
-          });
-        });
-      }).catch(function () {
-        offline('ランキングを読み込めませんでした。');
+    // rows: [{name, ms, mine}]（速い順）
+    function showRows(rows) {
+      list.innerHTML = '';
+      var rank = 0;
+      rows.forEach(function (v) {
+        if (typeof v.ms !== 'number' || typeof v.name !== 'string') return;
+        rank++;
+        var li = document.createElement('li');
+        if (v.mine) li.className = 'me';
+        var n = document.createElement('span');
+        n.className = 'rta-rank';
+        n.textContent = rank + '位';
+        var nm = document.createElement('span');
+        nm.className = 'rta-who';
+        nm.textContent = v.name.slice(0, 12) + (v.mine ? '（あなた）' : '');
+        var t = document.createElement('b');
+        t.className = 'rta-num';
+        t.textContent = DWD.fmt(v.ms);
+        li.appendChild(n); li.appendChild(nm); li.appendChild(t);
+        list.appendChild(li);
+      });
+      if (!rank) note('まだ記録がありません。最初の記録を残そう。');
+    }
+    function disableSend(text) {
+      sendBtn.disabled = true;
+      if (!form.hidden && text) msg.textContent = text;
+    }
+    // 送信フォームの共通処理。submitFn(name, ms) は「登録後のベスト(ms)」を返す Promise
+    function bindSubmit(submitFn) {
+      var sending = false;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (sending) return;
+        var ms = DWD.get('rtaPending');
+        var name = document.getElementById('rtaName').value.trim().slice(0, 12);
+        if (!name) { msg.textContent = '名前を入れてください。'; return; }
+        if (typeof ms !== 'number' || ms < 30000 || ms > 3 * 3600000) { msg.textContent = 'このタイムは登録できません。'; return; }
+        sending = true;
+        sendBtn.disabled = true;
+        msg.textContent = '登録中…';
+        submitFn(name, Math.round(ms)).then(function (best) {
+          msg.textContent = typeof best === 'number' && best < ms
+            ? '登録済みのタイム（' + DWD.fmt(best) + '）の方が速いので、タイムはそのままにしました。'
+            : '登録しました！';
+          DWD.set('name', name);
+          DWD.set('rtaPending', null);
+          form.hidden = true;
+        }).catch(function (err) {
+          msg.textContent = (err && err.userMessage) || '登録できませんでした。時間をおいてもう一度試してください。';
+          sendBtn.disabled = false;
+        }).then(function () { sending = false; });
       });
     }
-  }
 
+    var backend = rankBackend();
+    if (backend === 'supabase') return supabaseRanking();
+    if (backend === 'claude') return claudeRanking();
+    note('オンラインランキングは、公開サイトで開いたときに使えます。');
+    disableSend();
+
+    /* ---- Supabase ---- */
+    function supabaseRanking() {
+      // ブラウザごとの匿名ID（1人1件の記録に使う）
+      var pid = DWD.get('pid');
+      if (typeof pid !== 'string' || pid.length < 16) {
+        var a = new Uint8Array(16);
+        (window.crypto || window.msCrypto).getRandomValues(a);
+        pid = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+        DWD.set('pid', pid);
+      }
+      function api(path, opt) {
+        opt = opt || {};
+        var ctrl = window.AbortController ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 10000);
+        return fetch(SB_URL + path, {
+          method: opt.method || 'GET',
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+          body: opt.body ? JSON.stringify(opt.body) : undefined,
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function (r) {
+          clearTimeout(timer);
+          if (!r.ok) { var e = new Error('http ' + r.status); e.status = r.status; throw e; }
+          return r.json();
+        }, function (e) { clearTimeout(timer); throw e; });
+      }
+      function load() {
+        return api('/rest/v1/dwd_rta_scores?select=player_id,name,ms&order=ms.asc,updated_at.asc&limit=50').then(function (rows) {
+          showRows((Array.isArray(rows) ? rows : []).map(function (r) {
+            return { name: r.name, ms: r.ms, mine: r.player_id === pid };
+          }));
+        }).catch(function (e) {
+          note(e && e.status === 404 ? 'ランキングは準備中です。' : 'ランキングを読み込めませんでした。通信状況を確認してください。');
+        });
+      }
+      load();
+      setInterval(load, 60000);
+      bindSubmit(function (name, ms) {
+        return api('/rest/v1/rpc/dwd_submit_rta', {
+          method: 'POST',
+          body: { p_player: pid, p_name: name, p_ms: ms, p_ver: DWD.VERSION }
+        }).then(function (best) {
+          load();
+          return best;
+        });
+      });
+    }
+
+    /* ---- claude.ai の共有データベース ---- */
+    function claudeRanking() {
+      var tries = 0;
+      (function waitClaude() {
+        if (window.claude && typeof window.claude.use === 'function') return connect();
+        if (++tries > 30) { note('ランキングを読み込めませんでした。'); return disableSend(); }
+        setTimeout(waitClaude, 100);
+      })();
+      function connect() {
+        Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (r) {
+          var db = r[0], user = r[1];
+          if (!db) { note('ランキングを読み込めませんでした（claude.ai にサインインすると表示されます）。'); return disableSend(); }
+          return (user ? user.id() : Promise.resolve(null)).then(function (uid) {
+            var loading = setTimeout(function () {
+              if (list.querySelector('li.small')) note('ランキングにまだ接続できません。しばらくしてから開き直してください。');
+            }, 10000);
+            db.collection('rta').orderBy('ms').limit(50).onSnapshot(function (snap) {
+              if (!snap.metadata.fromCache) clearTimeout(loading);
+              showRows(snap.docs.map(function (d) {
+                var v = d.data() || {};
+                return { name: v.name, ms: v.ms, mine: !!uid && d.id === uid };
+              }));
+            }, function () {
+              clearTimeout(loading);
+              note('ランキングを読み込めませんでした。');
+            });
+            if (!uid) return disableSend('ランキングに登録するには claude.ai へのサインインが必要です。');
+            bindSubmit(function (name, ms) {
+              var ref = db.doc('rta/' + uid);
+              return ref.get().then(function (cur) {
+                var old = cur.exists ? cur.data() : null;
+                if (old && typeof old.ms === 'number' && old.ms <= ms) return old.ms;
+                return ref.set({ name: name, ms: ms, at: new Date().toISOString(), ver: DWD.VERSION }).then(function () { return ms; });
+              }).catch(function (err) {
+                var e = new Error('db');
+                if (err && err.code === 'invalid_argument') e.userMessage = 'この共有設定では登録できません（閲覧のみの権限です）。';
+                throw e;
+              });
+            });
+          });
+        }).catch(function () {
+          note('ランキングを読み込めませんでした。');
+          disableSend();
+        });
+      }
+    }
+  }
   function render(list) {
     main.innerHTML = '';
     list.forEach(function (p) {

@@ -9,7 +9,7 @@
   'use strict';
 
   // ---- バージョン情報（更新したら必ずここと CHANGELOG を更新する） ----
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
   var UPDATED = '2026-11-02';
 
   var DWD = (window.DWD = { VERSION: VERSION, UPDATED: UPDATED });
@@ -48,7 +48,7 @@
     return v;
   };
   // 進行状況を消す。RTA解放・ベストタイム・名前は残す（all=true なら全部消す）
-  var KEEP = ['rtaUnlocked', 'rtaBest', 'rtaPending', 'name'];
+  var KEEP = ['rtaUnlocked', 'rtaBest', 'rtaPending', 'name', 'pid'];
   DWD.reset = function (all) {
     var old = DWD.load();
     var next = {};
