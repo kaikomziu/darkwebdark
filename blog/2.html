@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>近所のカフェを開拓☕ | ひだまり日記</title>
+<link rel="stylesheet" href="../assets/blog.css">
+</head>
+<body>
+<header class="site-header">
+  <h1 class="site-title"><a href="../index.html"><span class="sun"></span><span id="siteName">ひだまり日記</span></a></h1>
+  <p class="site-desc">ゆきのゆるっと日常ブログ ／ 猫とカフェとひとり暮らし</p>
+</header>
+<nav class="nav"><a href="../index.html">ホーム</a></nav>
+<div class="article">
+  <article class="card">
+    <div class="post-date">2026/09/12</div>
+    <h2>近所のカフェを開拓☕</h2>
+    <p>今日はお休みだったので、ずっと気になってた駅前の「喫茶こもれび」に行ってきました！</p>
+    <div class="photo"><canvas data-photo="latte"></canvas><span class="cap">ハートのラテアート♡</span></div>
+    <p>店内は木のぬくもりがあって、BGMはジャズ。マスターがとっても優しいおじいちゃんで、ラテアートをハートにしてくれました。かわいすぎて飲むのがもったいなかった…！</p>
+    <p>マスターと話してたら、わたしが住んでるアパートのことを知ってるみたいで、</p>
+    <p>「ああ、あそこの2階か。……となりの部屋、まだ空いてるのかい？」</p>
+    <p>って聞かれました。たしかにとなりの<b>203号室</b>はずっと空き部屋です。引っ越しのあいさつに行こうと思ったら、表札もなくて。</p>
+    <p>マスターは「そうかい」って言ったきり、コーヒーをいれなおしてました。なんだったんだろ？</p>
+    <p>帰ったらクロがお出迎えしてくれました。ずっと玄関で待ってたみたい。かわいいやつめ〜。</p>
+    <div class="tags"><span class="tag">#カフェ</span><span class="tag">#おでかけ</span></div>
+  </article>
+
+  <section class="card comments">
+    <h3>コメント (3)</h3>
+    <div class="comment"><span class="who">まいまい</span><span class="when">2026/09/12</span><div>こもれびいいよね〜！ 今度いっしょに行こ！</div></div>
+    <div class="comment"><span class="who">通りすがり</span><span class="when">2026/09/13</span><div>そのアパートって線路沿いの？ 昔あそこ住んでたけど、すぐ引っ越したなあ</div></div>
+    <div class="comment"><span class="who">ゆき</span><span class="when">2026/09/13</span><div>通りすがりさん、そうです！ 何かあったんですか？笑</div></div>
+    <div id="newComments"></div>
+    <form class="comment-form" id="cform">
+      <input name="n" placeholder="おなまえ" maxlength="20" autocomplete="nickname">
+      <input name="b" placeholder="コメントを書く" maxlength="100">
+      <button>送信</button>
+    </form>
+  </section>
+
+  <div class="pager"><a href="1.html">← 前の記事</a><a href="3.html">次の記事 →</a></div>
+</div>
+<footer class="site-footer">© 2026 ひだまり日記<div data-dwd-ver="ひだまり日記"></div></footer>
+<script src="../assets/dwd.js"></script>
+<script src="../assets/blog.js"></script>
+<script>
+BLOG.markRead(2);
+BLOG.fakeCommentForm(document.getElementById('cform'), document.getElementById('newComments'), function (list, name) {
+  var d = document.createElement('div');
+  d.className = 'comment';
+  d.innerHTML = '<span class="who">ゆき</span><span class="when">たった今</span><div></div>';
+  d.querySelector('div').textContent = name + 'さん、ありがとうございます☕ こもれび、ほんとにおすすめです！';
+  list.appendChild(d);
+  DWD.sfx.chime();
+});
+</script>
+</body>
+</html>

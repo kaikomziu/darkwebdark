@@ -1,0 +1,178 @@
+/* ひだまり日記（表のブログ）のスタイル */
+:root {
+  --bg: #fdf6ec;
+  --paper: #ffffff;
+  --ink: #4a3f35;
+  --sub: #9a8b7c;
+  --accent: #f2a65a;
+  --accent2: #8cc0a8;
+  --line: #efe3d3;
+  --pink: #f6c1c1;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: radial-gradient(#f3e6d4 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+  color: var(--ink);
+  font-family: "Hiragino Maru Gothic ProN", "M PLUS Rounded 1c", "Yu Gothic", "Meiryo", sans-serif;
+  line-height: 1.9;
+  overflow-x: hidden;
+  transition: background-color 2s, color 2s, filter 2s;
+}
+a { color: #d07a2e; }
+img { max-width: 100%; }
+
+.site-header {
+  text-align: center;
+  padding: 34px 16px 22px;
+  position: relative;
+}
+.site-title {
+  margin: 0;
+  font-size: clamp(28px, 7vw, 44px);
+  letter-spacing: .08em;
+  color: var(--ink);
+}
+.site-title a { color: inherit; text-decoration: none; }
+.site-title .sun {
+  display: inline-block;
+  width: .9em; height: .9em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #ffd88a, var(--accent));
+  box-shadow: 0 0 0 6px #ffe6c255;
+  vertical-align: -0.08em;
+  margin-right: .25em;
+}
+.site-desc { color: var(--sub); font-size: 14px; margin: 6px 0 0; }
+
+.nav {
+  display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;
+  padding: 0 12px 18px;
+}
+.nav a {
+  text-decoration: none; color: var(--ink); font-size: 14px;
+  padding: 6px 14px; border-radius: 999px; background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.wrap {
+  max-width: 980px; margin: 0 auto; padding: 0 16px 40px;
+  display: grid; grid-template-columns: 1fr 260px; gap: 22px;
+}
+@media (max-width: 760px) {
+  .wrap { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 22px 22px;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 0 #f1e4d2;
+  margin-bottom: 20px;
+}
+@media (max-width: 480px) { .card { padding: 18px 16px; } }
+
+.post-date { color: var(--sub); font-size: 13px; }
+.post-title { margin: 2px 0 10px; font-size: 21px; }
+.post-title a { color: var(--ink); text-decoration: none; }
+.post-title a:hover { color: #d07a2e; }
+.post-excerpt { margin: 0 0 10px; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 12px; background: #fff2e2; color: #c07a3a; border-radius: 6px; padding: 1px 8px; }
+.readmore { display: inline-block; margin-top: 6px; font-size: 14px; }
+
+.side .card { padding: 18px; }
+.side h3 { margin: 0 0 10px; font-size: 15px; border-bottom: 2px dashed var(--line); padding-bottom: 6px; }
+.profile { text-align: center; }
+.avatar {
+  width: 96px; height: 96px; margin: 4px auto 10px; border-radius: 50%;
+  background: #ffe1c4; position: relative; overflow: hidden;
+  border: 3px solid #fff; box-shadow: 0 0 0 2px var(--line);
+}
+/* CSSで描いたアバター（女の子） */
+.avatar .hair { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 20%, #6b4a33 55%, transparent 56%); }
+.avatar .face { position: absolute; left: 22%; top: 30%; width: 56%; height: 56%; border-radius: 50%; background: #ffe7d4; }
+.avatar .eye { position: absolute; top: 52%; width: 7px; height: 9px; border-radius: 50%; background: #3b2b20; transition: all .4s; }
+.avatar .eye.l { left: 38%; } .avatar .eye.r { right: 38%; }
+.avatar .cheek { position: absolute; top: 62%; width: 10px; height: 6px; border-radius: 50%; background: #f9b7b7; }
+.avatar .cheek.l { left: 30%; } .avatar .cheek.r { right: 30%; }
+.avatar .mouth { position: absolute; left: 50%; top: 68%; width: 10px; height: 5px; margin-left: -5px; border-bottom: 2px solid #c06b5a; border-radius: 0 0 10px 10px; transition: all .4s; }
+.avatar.creepy .eye { background: #000; width: 11px; height: 14px; box-shadow: 0 0 6px #000; }
+.avatar.creepy .mouth { height: 14px; width: 8px; margin-left: -4px; border: 0; border-radius: 50%; background: #2a0000; }
+.avatar.creepy .cheek { background: #7a1010; }
+
+.counter {
+  font-family: "Courier New", monospace; font-size: 22px; letter-spacing: .15em;
+  background: #3b302a; color: #ffd88a; border-radius: 8px; display: inline-block; padding: 2px 10px;
+}
+.side ul { margin: 0; padding-left: 1.1em; font-size: 14px; }
+.side li { margin: 4px 0; }
+
+.site-footer { text-align: center; color: var(--sub); font-size: 12px; padding: 10px 16px 30px; }
+
+/* 記事ページ */
+.article { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; }
+.article .card { padding: 26px 26px; }
+@media (max-width: 480px) { .article .card { padding: 20px 16px; } }
+.article h2 { margin: 4px 0 18px; font-size: 24px; line-height: 1.5; }
+.article p { margin: 0 0 1.2em; }
+.photo {
+  border-radius: 14px; overflow: hidden; margin: 6px 0 18px; aspect-ratio: 4 / 3;
+  position: relative; background: #eee; max-height: 420px; width: 100%;
+}
+.photo canvas { width: 100%; height: 100%; display: block; }
+.photo .cap { position: absolute; bottom: 8px; right: 10px; font-size: 12px; color: #fff; text-shadow: 0 1px 2px #0008; }
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 14px; flex-wrap: wrap; }
+.pager a { text-decoration: none; background: var(--paper); border: 1px solid var(--line); padding: 8px 14px; border-radius: 10px; }
+
+.comments h3 { font-size: 16px; margin: 0 0 12px; }
+.comment { border-top: 1px dashed var(--line); padding: 10px 0; font-size: 14px; }
+.comment .who { font-weight: bold; }
+.comment .when { color: var(--sub); font-size: 12px; margin-left: 6px; }
+.comment.odd .who { color: #8a0000; }
+.comment form, .comment-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.comment-form input, .comment-form textarea {
+  flex: 1 1 160px; font: inherit; font-size: 16px; padding: 8px 10px;
+  border-radius: 10px; border: 1px solid var(--line); background: #fffdf9; color: var(--ink);
+}
+.comment-form button {
+  font: inherit; font-size: 15px; padding: 8px 16px; border-radius: 10px; border: 0;
+  background: var(--accent); color: #fff; cursor: pointer;
+}
+
+.faint { color: #fbf3e8; }
+.faint::selection { background: #300; color: #f33; }
+.small { font-size: 13px; color: var(--sub); }
+
+/* 不気味化ステージ */
+body.stage-3 { --bg: #f6efe4; }
+body.stage-4 { --bg: #ece4d8; filter: saturate(.75); }
+body.stage-5 { --bg: #ddd3c6; filter: saturate(.5) contrast(1.05); }
+body.blood {
+  --bg: #1a0505; --paper: #250808; --ink: #e8d8d8; --sub: #a05050; --line: #4a1010;
+  background-image: none;
+}
+body.blood .card { box-shadow: 0 4px 0 #400; }
+body.blood a { color: #ff4040; }
+body.blood .counter { background: #000; color: #f22; }
+body.blood .tag { background: #3a0a0a; color: #f55; }
+body.blood .nav a, body.blood .pager a { background: var(--paper); color: #f55; }
+
+.hidden { display: none !important; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: #fff; border: 2px solid var(--accent); color: var(--ink);
+  border-radius: 14px; padding: 12px 18px; z-index: 50; box-shadow: 0 6px 20px #0002;
+  font-size: 15px; max-width: calc(100% - 32px); text-align: center;
+  animation: toastIn .5s ease;
+}
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } }
+
+.redtext { color: #b00000; }
+.shiver { display: inline-block; animation: shiver .15s linear infinite; }
+@keyframes shiver { 0% { transform: translate(0) } 50% { transform: translate(1px, -1px) } 100% { transform: translate(-1px, 1px) } }

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>夜の音 | ひだまり日記</title>
+<link rel="stylesheet" href="../assets/blog.css">
+</head>
+<body class="stage-3">
+<header class="site-header">
+  <h1 class="site-title"><a href="../index.html"><span class="sun"></span><span id="siteName">ひだまり日記</span></a></h1>
+  <p class="site-desc">ゆきのゆるっと日常ブログ ／ 猫とカフェとひとり暮らし</p>
+</header>
+<nav class="nav"><a href="../index.html">ホーム</a></nav>
+<div class="article">
+  <article class="card">
+    <div class="post-date">2026/09/27</div>
+    <h2>夜の音</h2>
+    <p>ちょっと聞いてほしいことがあって。</p>
+    <p>最近、夜中になると、となりの部屋から音がするんです。<br>となりって、前の記事で書いた空き部屋の<b>203号室</b>です。</p>
+    <p>音は決まって夜中の2時すぎ。壁を、</p>
+    <p style="text-align:center;font-size:20px;letter-spacing:.5em" id="knockText">コン、コン、コン。</p>
+    <p>って<b>3回</b>ノックするみたいな音。毎晩ぜったい3回。</p>
+    <p>管理会社に電話したら「203は誰も住んでいませんよ」って。じゃあ、あれは何なんだろう。古い建物だから、水道管とか？ そうだといいな。</p>
+    <div class="photo"><canvas data-photo="night"></canvas><span class="cap">夜中のクロ。ずっと壁を見てる</span></div>
+    <p>あと、クロが変なんです。ノックの音がすると、203側の壁の前にちょこんと座って、じーっと見つめてる。しっぽもぴたっと止まって。<br>猫には何か見えてるって言うけど……やめてほしいな、そういうの😅</p>
+    <p>こわいので、今日は電気つけたまま寝ます！ おやすみなさい。</p>
+    <div class="tags"><span class="tag">#ひとり暮らし</span><span class="tag">#クロ</span></div>
+  </article>
+
+  <section class="card comments">
+    <h3>コメント (3)</h3>
+    <div class="comment"><span class="who">まいまい</span><span class="when">2026/09/27</span><div>え、こわ…大丈夫？ うち泊まりにくる？</div></div>
+    <div class="comment"><span class="who">通りすがり</span><span class="when">2026/09/28</span><div>ノックされても、絶対に返事しちゃだめですよ。</div></div>
+    <div class="comment odd"><span class="who">　</span><span class="when">2026/09/28 02:13</span><div>コン　コン　コン</div></div>
+    <div id="newComments"></div>
+    <form class="comment-form" id="cform">
+      <input name="n" placeholder="おなまえ" maxlength="20" autocomplete="nickname">
+      <input name="b" placeholder="コメントを書く" maxlength="100">
+      <button>送信</button>
+    </form>
+  </section>
+
+  <div class="pager"><a href="2.html">← 前の記事</a><a href="4.html">次の記事 →</a></div>
+</div>
+<footer class="site-footer">© 2026 ひだまり日記<div data-dwd-ver="ひだまり日記"></div></footer>
+<script src="../assets/dwd.js"></script>
+<script src="../assets/blog.js"></script>
+<script>
+BLOG.markRead(3);
+// ノックの文字をタップすると…ノック音
+document.getElementById('knockText').addEventListener('click', function () { DWD.sfx.knock(3); });
+BLOG.fakeCommentForm(document.getElementById('cform'), document.getElementById('newComments'), function (list, name) {
+  var d = document.createElement('div');
+  d.className = 'comment odd';
+  d.innerHTML = '<span class="who">　</span><span class="when">たった今</span><div></div>';
+  d.querySelector('div').textContent = name + '　コン　コン　コン';
+  list.appendChild(d);
+  DWD.sfx.knock(3);
+});
+</script>
+</body>
+</html>

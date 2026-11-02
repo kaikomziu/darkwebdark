@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>　 | ひだまり日記</title>
+<link rel="stylesheet" href="../assets/blog.css">
+<style>
+  #lines p { opacity: 0; transition: opacity 1.2s; }
+  #lines p.on { opacity: 1; }
+  #knockBtn {
+    display: block; margin: 26px auto 6px; font: inherit; font-size: 18px; letter-spacing: .4em;
+    padding: 14px 30px; border-radius: 12px; border: 2px solid #6b1010; background: #2a0a0a; color: #f2d0d0; cursor: pointer;
+  }
+  #knockBtn[hidden] { display: none; }
+</style>
+</head>
+<body class="stage-5">
+<header class="site-header">
+  <h1 class="site-title"><a href="../index.html"><span class="sun"></span><span id="siteName">ひだまり日記</span></a></h1>
+  <p class="site-desc">ゆきのゆるっと日常ブログ ／ 猫とカフェとひとり暮らし</p>
+</header>
+<nav class="nav"><a href="../index.html">ホーム</a></nav>
+<div class="article">
+  <article class="card">
+    <div class="post-date">2026/10/31 03:03</div>
+    <h2>　</h2>
+    <div id="lines">
+      <p>だれか　みてますか</p>
+      <p>クロの声が　毎晩　かべのむこうから　きこえます</p>
+      <p>きのうから　わたしの名前も　よばれています</p>
+      <p>ゆき　ゆき　ゆき　って</p>
+      <div class="photo"><canvas data-photo="dark"></canvas><span class="cap">　</span></div>
+      <p>電気が　つかなくなりました</p>
+      <p>スマホの　あかりだけで　これを書いています</p>
+      <p>かべの　ひっかき傷が　ふえています　内側から</p>
+      <p>いま　ノックが　なりました</p>
+      <p>こたえなければ　だいじょうぶ</p>
+      <p>こたえなければ</p>
+      <p id="youLine">　</p>
+      <p class="redtext">あなたが　かわりに　こたえて</p>
+    </div>
+    <button type="button" id="knockBtn" hidden>ノックする</button>
+  </article>
+  <div class="pager"><a href="4.html">← 前の記事</a><a href="../index.html">ホーム</a></div>
+</div>
+<footer class="site-footer">© 2026 ひだまり日記<div data-dwd-ver="ひだまり日記"></div></footer>
+<script src="../assets/dwd.js"></script>
+<script src="../assets/blog.js"></script>
+<script>
+(function () {
+  BLOG.markRead(5);
+  var you = document.getElementById('youLine');
+  you.textContent = 'いま　' + DWD.timeStr() + '　' + DWD.device() + '　で　これを　みている　あなた';
+  you.className = 'redtext';
+
+  // 一行ずつ浮かび上がる
+  var ps = DWD.$$('#lines > p, #lines > .photo');
+  ps.forEach(function (p) { p.style.opacity = 0; p.style.transition = 'opacity 1.2s'; });
+  var i = 0;
+  (function next() {
+    if (i >= ps.length) {
+      document.getElementById('knockBtn').hidden = false;
+      return;
+    }
+    ps[i++].style.opacity = 1;
+    setTimeout(next, i > 9 ? 1500 : 1100);
+  })();
+
+  var btn = document.getElementById('knockBtn');
+  var count = 0;
+  btn.addEventListener('click', function () {
+    count++;
+    DWD.sfx.knock(1);
+    btn.textContent = 'コン'.repeat(count);
+    if (count < 3) return;
+    btn.disabled = true;
+    // 3回ノックした＝こたえてしまった
+    setTimeout(function () {
+      DWD.sfx.knock(3, 0.18);
+      document.body.classList.add('blood');
+      DWD.$$('#lines p').forEach(function (p) { p.textContent = 'はいれる'; });
+      document.getElementById('siteName').textContent = 'DarkWebDark';
+      document.body.classList.add('dwd-shake');
+    }, 900);
+    setTimeout(function () {
+      DWD.set('entered', true);
+      DWD.go('../dwd/index.html', 1400);
+    }, 2600);
+  });
+})();
+</script>
+</body>
+</html>

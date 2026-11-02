@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DarkWebDark</title>
+<link rel="stylesheet" href="../assets/dark.css">
+<style>
+  .doors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 420px; margin: 28px auto 10px; }
+  .door {
+    aspect-ratio: 3 / 5; background: linear-gradient(#1a1210, #0b0706); border: 1px solid #2b1a16;
+    color: #6d5f57; font: 700 22px "Courier New", monospace; cursor: pointer; position: relative;
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; border-radius: 3px;
+    touch-action: manipulation; transition: transform .15s, border-color .15s;
+  }
+  .door::after { content: ""; position: absolute; right: 16%; top: 52%; width: 7px; height: 7px; border-radius: 50%; background: #5a4a3a; }
+  .door:hover { border-color: #6b1010; transform: translateY(-2px); }
+  .door.open { background: #000; border-color: #000; color: #000; }
+  #lines .msg { opacity: 0; transition: opacity 1s; }
+  #lines .msg.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div class="page">
+  <div class="layer">LAYER 01 / 入口</div>
+  <h1 class="logo">DarkWebDark</h1>
+  <div id="lines">
+    <p class="msg">ようこそ</p>
+    <p class="msg">ここは　とても　ふかい　ところ</p>
+    <p class="msg">ゆきも　クロも　ここに　いる</p>
+    <p class="msg">おりていくには　とびらを　えらんで</p>
+    <p class="msg red">ほんものは　ひとつだけ。　かべを　たたいた　かず</p>
+  </div>
+  <div class="doors hidden" id="doors"></div>
+  <p class="err" id="err"></p>
+</div>
+<div class="footer-ver" data-dwd-ver></div>
+
+<script src="../assets/dwd.js"></script>
+<script>
+(function () {
+  'use strict';
+  DWD.noiseBg(0.05);
+  var CORRECT = 3; // ブログ「夜の音」：ノックは毎晩3回
+
+  DWD.gate({
+    title: '203号室　に　接続しますか',
+    button: 'はい',
+    warn: '※ 大きな音・突然の驚かしがあります<br>イヤホン・音量にご注意ください'
+  }).then(start);
+
+  var haunt;
+  function start() {
+    var drone = DWD.drone(0.16);
+    DWD.sfx.knock(3);
+    var ms = DWD.$$('#lines .msg');
+    var i = 0;
+    (function next() {
+      if (i >= ms.length) {
+        document.getElementById('doors').classList.remove('hidden');
+        haunt = DWD.haunt({ min: 12000, max: 24000, bigChance: 0.25 });
+        return;
+      }
+      ms[i++].classList.add('on');
+      DWD.sfx.blip();
+      setTimeout(next, 1300);
+    })();
+    buildDoors();
+  }
+
+  function buildDoors() {
+    var wrap = document.getElementById('doors');
+    for (var n = 1; n <= 9; n++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'door';
+      b.textContent = n;
+      b.dataset.n = n;
+      wrap.appendChild(b);
+    }
+    var wrong = 0;
+    wrap.addEventListener('click', function (e) {
+      var d = e.target.closest('.door');
+      if (!d || d.classList.contains('open') || DWD.isScaring()) return;
+      var n = +d.dataset.n;
+      d.classList.add('open');
+      if (n === CORRECT) {
+        DWD.sfx.knock(3);
+        document.getElementById('err').textContent = 'こたえたね';
+        DWD.set('layer', Math.max(DWD.get('layer') || 0, 2));
+        setTimeout(function () { DWD.go('2/index.html', 1200); }, 900);
+        return;
+      }
+      wrong++;
+      DWD.inc('miss');
+      // はずれの扉：種類いろいろ
+      var r = wrong % 4;
+      if (r === 1) {
+        DWD.scare({ type: 'face' });
+      } else if (r === 2) {
+        // 偽の404ページへ
+        location.href = '404.html';
+      } else if (r === 3) {
+        DWD.scare({ type: 'text', text: 'ちがう' });
+      } else {
+        DWD.scare({ type: 'eye' });
+      }
+      document.getElementById('err').textContent = DWD.pick(['そこじゃない', 'ちがう', 'かぞえて', 'よる　なんかい　なった？']);
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DarkWebDark</title>
+<link rel="stylesheet" href="assets/dark.css">
+<style>
+  .end { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 16px; position: relative; z-index: 2; text-align: center; }
+  .end .msg { opacity: 0; transition: opacity 1.4s; }
+  .end .msg.on { opacity: 1; }
+  .stats { font-family: "Courier New", monospace; font-size: 13px; color: #6b5f58; line-height: 2; margin-top: 18px; opacity: 0; transition: opacity 2s; }
+  .stats.on { opacity: 1; }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; opacity: 0; transition: opacity 2s; }
+  .btns.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div class="end">
+  <h1 class="logo">DarkWebDark</h1>
+  <p class="msg">ゆきは　かべの　なかに　いる</p>
+  <p class="msg">クロも　かべの　なかに　いる</p>
+  <p class="msg" id="you"></p>
+  <p class="msg red">ノックが　きこえても　こたえないで</p>
+  <p class="msg dim" style="margin-top:20px">— END —</p>
+  <div class="stats" id="stats"></div>
+  <div class="btns" id="btns">
+    <button class="btn" id="again" type="button">さいしょから</button>
+    <a class="btn" href="index.html">ブログへ</a>
+  </div>
+</div>
+<div class="footer-ver" data-dwd-ver></div>
+<script src="assets/dwd.js"></script>
+<script>
+(function () {
+  'use strict';
+  DWD.noiseBg(0.04);
+  DWD.set('cleared', true);
+  var name = DWD.get('name') || 'あなた';
+  document.getElementById('you').textContent = 'そして　' + name + '　は　203号室に　すんでいる';
+  document.getElementById('stats').innerHTML =
+    'おどろかされた回数：' + (DWD.get('scares') || 0) + '<br>' +
+    'まちがえた回数：' + (DWD.get('miss') || 0) + '<br>' +
+    'プレイヤー名：' + name.replace(/[<>&"]/g, '');
+
+  var ms = DWD.$$('.msg');
+  var i = 0;
+  (function next() {
+    if (i >= ms.length) {
+      document.getElementById('stats').classList.add('on');
+      document.getElementById('btns').classList.add('on');
+      return;
+    }
+    ms[i++].classList.add('on');
+    setTimeout(next, 1700);
+  })();
+
+  // 最後の最後に、もう一度だけ
+  document.getElementById('again').addEventListener('click', function () {
+    DWD.flash(140);
+    DWD.sfx.knock(3);
+    DWD.reset();
+    setTimeout(function () { location.href = 'index.html'; }, 1300);
+  });
+})();
+</script>
+</body>
+</html>

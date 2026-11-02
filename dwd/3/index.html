@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DarkWebDark/3</title>
+<link rel="stylesheet" href="../../assets/dark.css">
+<style>
+  .chat { border: 1px solid #1f1a18; background: #070505; padding: 14px; min-height: 52vh; max-height: 60vh; overflow-y: auto; margin-top: 18px; font-family: "Courier New", "Hiragino Kaku Gothic ProN", monospace; font-size: 15px; line-height: 1.8; -webkit-overflow-scrolling: touch; }
+  .line { margin: 0 0 6px; word-break: break-all; }
+  .line .who { color: #a01010; margin-right: 8px; }
+  .line.me .who { color: #607080; }
+  .choices { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0; min-height: 50px; }
+  .choices form { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  body.red { background: #2a0000; }
+  body.red .chat { background: #1a0000; border-color: #600; }
+  /* 下へ下へと続く道 */
+  #abyss { height: 4200px; position: relative; }
+  #abyss p { position: absolute; left: 0; right: 0; text-align: center; letter-spacing: .4em; color: #3a2a2a; font-size: 15px; }
+  #abyss .goal { bottom: 80px; }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div class="page">
+  <div class="layer">LAYER 03 / 管理人</div>
+  <h1 class="logo">DarkWebDark/3</h1>
+  <div class="chat" id="chat" aria-live="polite"></div>
+  <div class="choices" id="choices"></div>
+  <div id="abyss" class="hidden"></div>
+</div>
+<div class="footer-ver" data-dwd-ver></div>
+
+<script src="../../assets/dwd.js"></script>
+<script>
+(function () {
+  'use strict';
+  DWD.noiseBg(0.05);
+  var chat = document.getElementById('chat');
+  var choices = document.getElementById('choices');
+  var name = DWD.get('name') || '';
+
+  function say(who, text, me) {
+    return new Promise(function (res) {
+      var p = document.createElement('p');
+      p.className = 'line' + (me ? ' me' : '');
+      var w = document.createElement('span');
+      w.className = 'who';
+      w.textContent = who + '>';
+      var t = document.createElement('span');
+      p.appendChild(w);
+      p.appendChild(t);
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+      if (me) { t.textContent = text; return res(); }
+      DWD.type(t, text, 75, true).then(function () {
+        chat.scrollTop = chat.scrollHeight;
+        setTimeout(res, 500);
+      });
+    });
+  }
+  var K = function (t) { return say('？？？', t); };
+
+  function choose(opts) {
+    return new Promise(function (res) {
+      choices.innerHTML = '';
+      opts.forEach(function (o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn';
+        b.textContent = o;
+        b.addEventListener('click', function () {
+          choices.innerHTML = '';
+          say('あなた', o, true).then(function () { res(o); });
+        });
+        choices.appendChild(b);
+      });
+    });
+  }
+  function ask() {
+    return new Promise(function (res) {
+      choices.innerHTML = '<form><input class="input" maxlength="10" placeholder="なまえ" autocomplete="off"><button class="btn">おくる</button></form>';
+      var f = choices.querySelector('form');
+      var inp = f.querySelector('input');
+      inp.value = name;
+      setTimeout(function () { inp.focus(); }, 100);
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var v = inp.value.trim().slice(0, 10);
+        if (!v) return;
+        choices.innerHTML = '';
+        say('あなた', v, true).then(function () { res(v); });
+      });
+    });
+  }
+
+  async function story() {
+    await DWD.wait(800);
+    await K('やっと　きたね');
+    await K('ずっと　まってた');
+    await K('なまえ　おしえて');
+    name = await ask();
+    DWD.set('name', name);
+    await K(name + '。');
+    await K(name + '。' + name + '。');
+    DWD.sfx.whisper();
+    await K('いい　なまえ。　おぼえた');
+    await K('いま　' + DWD.timeStr() + '　だね');
+    await K(DWD.device() + '　で　みてるんだ');
+    await K('へやは　くらい？');
+    var a = await choose(['あかるい', 'くらい']);
+    await K(a === 'あかるい' ? 'うそ' : 'しってる');
+    await K('ゆきも　さいしょは　ブログを　かいてた');
+    await K('クロを　さがしに　ここまで　おりてきた');
+    DWD.sfx.knock(3);
+    await K('いまは　ずっと　かべの　なかで　ノックしてる');
+    await K('つぎの　ひとが　こたえてくれるまで');
+    await K('ねえ　' + name);
+    await K('うしろ　みて');
+    var b = await choose(['みた', 'みない']);
+    if (b === 'みた') {
+      await K('ちがう');
+      await K('もっと　ちかく');
+    } else {
+      await K('じゃあ');
+      await K('こっちから　いくね');
+    }
+    DWD.sfx.heartbeat(3, 0.5);
+    await DWD.wait(1700);
+    await DWD.scare({ type: 'face', dur: 1300 });
+    // 画面が赤くなり、名前で埋め尽くされる
+    document.body.classList.add('red');
+    chat.innerHTML = '';
+    var spam = setInterval(function () {
+      var p = document.createElement('p');
+      p.className = 'line';
+      p.innerHTML = '<span class="who">？？？&gt;</span>';
+      p.appendChild(document.createTextNode((name + '　').repeat(6)));
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+      DWD.sfx.blip();
+    }, 90);
+    await DWD.wait(2500);
+    clearInterval(spam);
+    document.body.classList.remove('red');
+    chat.innerHTML = '';
+    await K('こわかった？');
+    await K('まだ　あさい');
+    await K('もっと　したへ　おりて');
+    DWD.set('layer', Math.max(DWD.get('layer') || 0, 4));
+    openAbyss();
+  }
+
+  // 長い長い下り坂（スクロール）
+  function openAbyss() {
+    var ab = document.getElementById('abyss');
+    ab.classList.remove('hidden');
+    var words = ['した', 'もっと', 'まだ', 'ついてきてる', 'ふりかえらないで', 'ゆきも　ここを　とおった', 'あと　すこし', name + '　はやく'];
+    words.forEach(function (w, i) {
+      var p = document.createElement('p');
+      p.textContent = w;
+      p.style.top = (300 + i * 470) + 'px';
+      ab.appendChild(p);
+    });
+    var g = document.createElement('p');
+    g.className = 'goal';
+    g.innerHTML = '<a class="btn" href="../4/index.html">LAYER 04 へ</a>';
+    ab.appendChild(g);
+    choices.innerHTML = '<p class="dim blink">▼　したへ　すすむ</p>';
+
+    var flashed = false, knocked = false;
+    window.addEventListener('scroll', function () {
+      var r = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+      if (!knocked && r > 0.35) { knocked = true; DWD.sfx.knock(3, 0.5); }
+      if (!flashed && r > 0.65) { flashed = true; DWD.scare({ type: 'face', dur: 900 }); }
+    }, { passive: true });
+    ab.querySelector('.goal a').addEventListener('click', function (e) {
+      e.preventDefault();
+      DWD.go('../4/index.html', 1000);
+    });
+  }
+
+  DWD.gate({ title: 'LAYER 03 に　おりますか', button: 'おりる' }).then(function () {
+    DWD.drone(0.15);
+    DWD.haunt({ min: 14000, max: 26000, big: false });
+    story();
+  });
+})();
+</script>
+</body>
+</html>

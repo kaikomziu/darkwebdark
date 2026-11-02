@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ひだまり日記</title>
+<meta name="description" content="ゆきのゆるっと日常ブログ。猫とカフェとひとり暮らし。">
+<link rel="stylesheet" href="assets/blog.css">
+</head>
+<body>
+<header class="site-header">
+  <h1 class="site-title"><a href="index.html"><span class="sun"></span><span id="siteName">ひだまり日記</span></a></h1>
+  <p class="site-desc" id="siteDesc">ゆきのゆるっと日常ブログ ／ 猫とカフェとひとり暮らし</p>
+</header>
+<nav class="nav">
+  <a href="index.html">ホーム</a>
+  <a href="#profile">プロフィール</a>
+  <a href="#archive">アーカイブ</a>
+</nav>
+
+<div class="wrap">
+  <main id="posts"></main>
+
+  <aside class="side">
+    <div class="card profile" id="profile">
+      <h3>プロフィール</h3>
+      <div class="avatar" id="avatar"><div class="hair"></div><div class="face"></div><div class="eye l"></div><div class="eye r"></div><div class="cheek l"></div><div class="cheek r"></div><div class="mouth"></div></div>
+      <b>ゆき</b>
+      <p class="small" id="profText">社会人2年目。最近ひとり暮らしをはじめました。黒猫のクロと暮らしてます🐈‍⬛ カフェ巡りが好き！</p>
+    </div>
+    <div class="card">
+      <h3>アクセスカウンター</h3>
+      <div style="text-align:center"><span class="counter" id="counter">001203</span>
+      <p class="small" id="counterNote" style="margin:6px 0 0">いつも見てくれてありがとう♪</p></div>
+    </div>
+    <div class="card" id="archive">
+      <h3>アーカイブ</h3>
+      <ul id="archiveList">
+        <li><a href="blog/1.html">2026年9月 (2)</a></li>
+        <li><a href="blog/3.html">2026年9月 (1)</a></li>
+        <li><a href="blog/4.html">2026年10月 (2)</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>お気に入りリンク</h3>
+      <ul id="links">
+        <li><a href="javascript:void(0)" class="dead">喫茶こもれび</a></li>
+        <li><a href="javascript:void(0)" class="dead">ねこのいる暮らし</a></li>
+        <li><a href="javascript:void(0)" class="dead">ひとり暮らしレシピ帖</a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<footer class="site-footer">
+  © 2026 ひだまり日記
+  <div data-dwd-ver="ひだまり日記"></div>
+</footer>
+
+<script src="assets/dwd.js"></script>
+<script src="assets/blog.js"></script>
+<script>
+(function () {
+  'use strict';
+  var read = DWD.get('read') || 0;
+  var escaped = DWD.get('escaped');
+  var cleared = DWD.get('cleared');
+
+  var POSTS = [
+    { n: 5, date: '2026/10/31', title: '（無題）', ex: '　', tags: ['日記'] },
+    { n: 4, date: '2026/10/14', title: 'クロがいなくなりました', ex: '3日前から、クロが帰ってきません。見かけた方はコメントで教えてください。', tags: ['クロ', 'おねがい'] },
+    { n: 3, date: '2026/09/27', title: '夜の音', ex: '最近、夜中にとなりの部屋から音がします。となりって空き部屋のはずなんだけど…。', tags: ['ひとり暮らし'] },
+    { n: 2, date: '2026/09/12', title: '近所のカフェを開拓☕', ex: '駅前の「喫茶こもれび」に行ってきました！ ラテアートがかわいすぎる…！', tags: ['カフェ'] },
+    { n: 1, date: '2026/09/03', title: 'はじめまして！', ex: 'ブログはじめました！ 引っ越したばかりの古いアパートでのんびり暮らしてます。', tags: ['おしらせ'] }
+  ];
+
+  var main = document.getElementById('posts');
+
+  function render(list) {
+    main.innerHTML = '';
+    list.forEach(function (p) {
+      var a = document.createElement('article');
+      a.className = 'card';
+      a.innerHTML =
+        '<div class="post-date"></div><h2 class="post-title"><a></a></h2>' +
+        '<p class="post-excerpt"></p><div class="tags"></div><a class="readmore">続きを読む →</a>';
+      a.querySelector('.post-date').textContent = p.date;
+      var t = a.querySelector('.post-title a');
+      t.textContent = p.title;
+      t.href = p.href || 'blog/' + p.n + '.html';
+      a.querySelector('.readmore').href = t.href;
+      a.querySelector('.post-excerpt').textContent = p.ex;
+      p.tags.forEach(function (tg) {
+        var s = document.createElement('span');
+        s.className = 'tag';
+        s.textContent = '#' + tg;
+        a.querySelector('.tags').appendChild(s);
+      });
+      main.appendChild(a);
+    });
+  }
+
+  // お気に入りリンクは開かない（リンク切れ）
+  DWD.$$('.dead').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      a.textContent = 'このページは存在しません';
+    });
+  });
+
+  /* -------- 1周クリア後 -------- */
+  if (cleared) {
+    document.body.classList.add('blood');
+    document.getElementById('avatar').classList.add('creepy');
+    document.getElementById('siteName').textContent = 'ひだまり日記';
+    document.getElementById('siteDesc').textContent = 'あなたも　ここで　くらしませんか';
+    document.getElementById('counter').textContent = '000002';
+    document.getElementById('counterNote').textContent = 'ゆき と ' + (DWD.get('name') || 'あなた');
+    render(POSTS.map(function (p) {
+      return { n: p.n, date: p.date, title: 'みつけた', ex: 'みつけた　みつけた　みつけた', tags: ['203'], href: 'end.html' };
+    }));
+    var box = document.createElement('div');
+    box.className = 'card';
+    box.innerHTML = '<p>もう一度、はじめから遊びますか？（セーブデータが消えます）</p><button type="button" id="resetBtn" style="font:inherit;padding:10px 20px;border-radius:10px;border:0;background:#a00;color:#fff;cursor:pointer">さいしょから</button>';
+    main.insertBefore(box, main.firstChild);
+    document.getElementById('resetBtn').addEventListener('click', function () {
+      DWD.reset();
+      location.href = 'index.html';
+    });
+    return;
+  }
+
+  /* -------- 脱出後（エンディング演出） -------- */
+  if (escaped) {
+    render([{ n: 6, date: '2026/11/02', title: 'ただいま！ クロも帰ってきました🐈‍⬛', ex: 'ずっと更新できなくてごめんなさい！ もう大丈夫です。全部、夢だったみたい。', tags: ['おしらせ', 'クロ'], href: '#' }].concat(POSTS.slice(1)));
+    document.getElementById('counterNote').textContent = 'おかえりなさい♪';
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = '🎉 <b>脱出成功！</b> 表の世界に戻ってきました。<br><span class="small">おつかれさまでした。</span>';
+    document.body.appendChild(toast);
+    setTimeout(function () { DWD.sfx.chime(); }, 300);
+
+    var started = false;
+    function finale() {
+      if (started) return;
+      started = true;
+      toast.remove();
+      var name = DWD.get('name') || 'あなた';
+      var titles = DWD.$$('.post-title a, .post-excerpt, .site-desc, #siteName, .small, .tag, .readmore, .side li a, .side h3');
+      var hb = 0;
+      // 心音がだんだん早くなる
+      DWD.sfx.heartbeat(4, 0.85);
+      setTimeout(function () { document.getElementById('avatar').classList.add('creepy'); DWD.sfx.blip(); }, 1400);
+      setTimeout(function () { document.body.classList.add('stage-5'); DWD.sfx.whisper(2); }, 2400);
+      setTimeout(function () {
+        DWD.sfx.heartbeat(6, 0.45);
+        var iv = setInterval(function () {
+          hb++;
+          titles.forEach(function (el) {
+            el.textContent = DWD.corrupt(el.getAttribute('data-o') || (el.setAttribute('data-o', el.textContent), el.textContent), Math.min(1, hb * 0.12));
+          });
+          if (hb % 3 === 0) DWD.sfx.blip();
+          if (hb > 9) {
+            clearInterval(iv);
+            document.body.classList.add('blood');
+            document.body.classList.remove('stage-5');
+            DWD.$$('.post-title a').forEach(function (el) { el.textContent = 'みつけた'; });
+            DWD.$$('.post-excerpt').forEach(function (el) { el.textContent = 'クロは　かえってきた。　ゆきは　もう　いない。　つぎは　' + name + '。'; });
+            document.getElementById('siteName').textContent = 'DarkWebDark';
+            document.getElementById('counter').textContent = '000203';
+            document.getElementById('counterNote').textContent = name + '　の　へや';
+            DWD.sfx.stinger();
+            document.body.classList.add('dwd-shake');
+            setTimeout(function () {
+              document.body.classList.remove('dwd-shake');
+              DWD.scare({ type: 'face', dur: 1900 }).then(function () {
+                return DWD.scare({ type: 'text', text: 'にがさない', dur: 1200 });
+              }).then(function () {
+                DWD.set('cleared', true);
+                DWD.go('end.html', 600);
+              });
+            }, 1600);
+          }
+        }, 220);
+      }, 4200);
+    }
+    // どこかを押すか、しばらく待つと始まる
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      if (a) e.preventDefault();
+      finale();
+    }, true);
+    setTimeout(finale, 9000);
+    return;
+  }
+
+  /* -------- 通常（だんだん不気味に） -------- */
+  render(POSTS);
+  if (read >= 3) document.body.classList.add('stage-3');
+  if (read >= 4) document.body.classList.add('stage-4');
+  if (read >= 5) document.body.classList.add('stage-5');
+
+  var counter = document.getElementById('counter');
+  if (read >= 2) counter.textContent = '00' + (1203 + read * 37);
+  if (read >= 3) {
+    counter.textContent = '000203';
+    document.getElementById('counterNote').textContent = 'いつも　見てるよ♪';
+  }
+  if (read >= 4) {
+    counter.textContent = '000001';
+    document.getElementById('counterNote').textContent = 'あなたが　はじめての　ひと';
+    document.getElementById('avatar').classList.add('creepy');
+    document.getElementById('profText').innerHTML = '社会人2年目。最近ひとり暮らしをはじめました。<s>黒猫のクロと暮らしてます</s> <span class="redtext">となりの人と　くらしてます</span>';
+    var li = document.createElement('li');
+    li.innerHTML = '<a href="dwd/index.html" class="faint" style="color:#ece4d8">となりのへや</a>';
+    document.getElementById('links').appendChild(li);
+  }
+  if (read >= 4) {
+    // 時々タイトルが一瞬化ける
+    setInterval(function () {
+      if (Math.random() < 0.5) DWD.glitchText(document.getElementById('siteName'), 300, 0.6);
+    }, 6000);
+  }
+  // 無題の記事は、前の記事を読むまではただの空白
+  if (read < 4) {
+    var first = main.querySelector('.post-excerpt');
+    if (first) first.textContent = '　';
+  } else {
+    var f2 = main.querySelector('.post-excerpt');
+    if (f2) f2.innerHTML = '<span class="redtext">だれか　みてますか</span>';
+  }
+})();
+</script>
+</body>
+</html>

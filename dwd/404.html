@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>404 Not Found</title>
+<style>
+  body { margin: 0; background: #fff; color: #000; font-family: "Times New Roman", serif; padding: 16px; }
+  h1 { font-size: 32px; margin: 8px 0; font-weight: bold; }
+  hr { border: 0; border-top: 1px solid #aaa; }
+  address { font-style: italic; font-size: 14px; }
+  #back { margin-top: 30px; font-size: 14px; color: #00e; text-decoration: underline; cursor: pointer; background: none; border: 0; padding: 0; font-family: inherit; }
+</style>
+</head>
+<body>
+<h1 id="h">Not Found</h1>
+<p id="p">The requested URL was not found on this server.</p>
+<hr>
+<address>Apache Server at darkwebdark Port 80</address>
+<button type="button" id="back">← 戻る</button>
+<div data-dwd-ver></div>
+<script src="../assets/dwd.js"></script>
+<script>
+// 普通のエラーページ…に見せかけて
+(function () {
+  var done = false;
+  function boo() {
+    if (done) return;
+    done = true;
+    document.getElementById('h').textContent = 'Found';
+    document.getElementById('p').textContent = 'みつけた';
+    DWD.scare({ type: 'face', dur: 1300 }).then(function () {
+      location.href = 'index.html';
+    });
+  }
+  // 戻るボタンを押しても、待っていても来る
+  document.getElementById('back').addEventListener('click', boo);
+  document.addEventListener('pointerdown', boo);
+  setTimeout(function () {
+    document.getElementById('p').textContent = 'The requested URL was found on this server.';
+  }, 2500);
+  setTimeout(boo, 5000);
+})();
+</script>
+</body>
+</html>

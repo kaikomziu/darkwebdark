@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>クロがいなくなりました | ひだまり日記</title>
+<link rel="stylesheet" href="../assets/blog.css">
+</head>
+<body class="stage-4">
+<header class="site-header">
+  <h1 class="site-title"><a href="../index.html"><span class="sun"></span><span id="siteName">ひだまり日記</span></a></h1>
+  <p class="site-desc">ゆきのゆるっと日常ブログ ／ 猫とカフェとひとり暮らし</p>
+</header>
+<nav class="nav"><a href="../index.html">ホーム</a></nav>
+<div class="article">
+  <article class="card">
+    <div class="post-date">2026/10/14</div>
+    <h2>クロがいなくなりました</h2>
+    <p>3日前から、クロが帰ってきません。</p>
+    <p>うちは完全室内飼いで、窓もドアも閉めてたはずなのに、朝起きたらどこにもいませんでした。</p>
+    <div class="photo"><canvas data-photo="empty"></canvas><span class="cap">クロのお気に入りのクッション</span></div>
+    <p>部屋中さがしました。押し入れも、洗濯機の裏も、ベッドの下も。<br>203側の壁の前に、クロの毛がたくさん落ちてました。壁紙には、爪でひっかいたような跡。</p>
+    <p class="gl">それから、玄関のドアにこんなメモが貼ってありました。</p>
+    <div class="photo"><canvas data-photo="note"></canvas><span class="cap">わたしの字じゃない</span></div>
+    <p class="gl">わたしの字じゃありません。</p>
+    <p class="gl">あの晩も、ノックがありました。いつもは3回なのに、その日は止まらなくて。わたし、こわくて、つい「だれですか」って言っちゃったんです。</p>
+    <p class="gl">そしたらノックが止まって、壁のむこうから、クロの鳴き声がしました。</p>
+    <p class="faint">となりは　あいてる　こたえたら　はいれる</p>
+    <p>黒猫のクロ、3さい、オス、赤い首輪をしています。見かけた方はコメントで教えてください。<br>お願いします。</p>
+    <div class="tags"><span class="tag">#クロ</span><span class="tag">#おねがい</span></div>
+  </article>
+
+  <section class="card comments">
+    <h3>コメント (4)</h3>
+    <div class="comment"><span class="who">まいまい</span><span class="when">2026/10/14</span><div>えっ…警察とか管理会社に言った？ 電話でないけど大丈夫？</div></div>
+    <div class="comment"><span class="who">通りすがり</span><span class="when">2026/10/15</span><div>返事しちゃったんですね。すぐにそこを出てください。</div></div>
+    <div class="comment odd"><span class="who">203</span><span class="when">2026/10/15 02:13</span><div>クロは　こっちに　いるよ</div></div>
+    <div class="comment odd"><span class="who">203</span><span class="when">2026/10/15 02:13</span><div>ゆきも　おいで</div></div>
+    <div id="newComments"></div>
+    <form class="comment-form" id="cform">
+      <input name="n" placeholder="おなまえ" maxlength="20" autocomplete="nickname">
+      <input name="b" placeholder="コメントを書く" maxlength="100">
+      <button>送信</button>
+    </form>
+  </section>
+
+  <div class="pager"><a href="3.html">← 前の記事</a><a href="5.html">次の記事 →</a></div>
+</div>
+<footer class="site-footer">© 2026 ひだまり日記<div data-dwd-ver="ひだまり日記"></div></footer>
+<script src="../assets/dwd.js"></script>
+<script src="../assets/blog.js"></script>
+<script>
+BLOG.markRead(4);
+// ときどき本文が化ける
+setInterval(function () {
+  var els = DWD.$$('.gl');
+  if (Math.random() < 0.6) DWD.glitchText(DWD.pick(els), 400, 0.35);
+}, 3500);
+// 画面のどこかを触ると、たまに壁を叩く音
+var taps = 0;
+document.addEventListener('click', function () {
+  taps++;
+  if (taps === 3 || taps === 8) DWD.sfx.knock(3);
+});
+BLOG.fakeCommentForm(document.getElementById('cform'), document.getElementById('newComments'), function (list, name) {
+  var d = document.createElement('div');
+  d.className = 'comment odd';
+  d.innerHTML = '<span class="who">203</span><span class="when">たった今</span><div></div>';
+  d.querySelector('div').textContent = name + '　も　おいで';
+  list.appendChild(d);
+  DWD.sfx.whisper();
+});
+</script>
+</body>
+</html>

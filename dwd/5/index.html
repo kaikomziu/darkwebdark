@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DarkWebDark/5</title>
+<link rel="stylesheet" href="../../assets/dark.css">
+<style>
+  body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .eyebox { position: relative; width: min(420px, 88vw); aspect-ratio: 2 / 1; margin: 14px auto 6px; overflow: hidden; border-radius: 50% / 50%; background: #000; }
+  .eyebox canvas { width: 100%; height: 100%; display: block; }
+  .lid { position: absolute; left: 0; right: 0; height: 50%; background: radial-gradient(ellipse at 50% 100%, #2a1612, #0d0605 70%); transition: transform .14s ease-in; z-index: 2; }
+  .lid.top { top: 0; transform-origin: top; }
+  .lid.bot { bottom: 0; transform-origin: bottom; }
+  .eyebox.peek .lid { transform: scaleY(.82); transition-duration: .3s; }
+  .eyebox.open .lid { transform: scaleY(0); }
+  .state { text-align: center; font-family: "Courier New", monospace; letter-spacing: .3em; height: 1.6em; color: #6b5a52; }
+  .state.danger { color: #ff2020; }
+  .bar { width: min(420px, 88vw); height: 8px; margin: 18px auto 6px; background: #120a09; border: 1px solid #2b1a16; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4a0a0a, #c01515); }
+  .dist { text-align: center; font-family: "Courier New", monospace; color: #8a7a70; letter-spacing: .2em; }
+  #hold {
+    display: block; margin: 22px auto 0; width: min(300px, 80vw); height: 84px; font: inherit; font-size: 20px; letter-spacing: .5em;
+    border: 1px solid #5a1010; background: #120606; color: #e8caca; border-radius: 6px; cursor: pointer;
+    touch-action: none; -webkit-user-select: none; user-select: none;
+  }
+  #hold.on { background: #3a0808; border-color: #ff3030; box-shadow: 0 0 24px #a0000055; }
+  #exit { display: block; margin: 28px auto 0; font-size: 22px; padding: 18px 40px; background: #eee; color: #000; border: 0; letter-spacing: .5em; box-shadow: 0 0 60px #fff; animation: glow 1.2s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 100px #fff; } }
+  .blackout { position: fixed; inset: 0; background: #000; z-index: 60; display: flex; align-items: center; justify-content: center; color: #822; letter-spacing: .3em; text-align: center; padding: 16px; }
+  .white { position: fixed; inset: 0; background: #fff; z-index: 70; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif; text-align: center; padding: 16px; animation: fadeIn 1.4s ease both; }
+  .white h2 { font-size: clamp(26px, 8vw, 40px); margin: 0; letter-spacing: .2em; }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div class="page">
+  <div class="layer">LAYER 05 / 最深部</div>
+  <h1 class="logo">DarkWebDark/5</h1>
+  <p class="msg">でぐちは　ある。</p>
+  <p class="msg red">でも　みられている　あいだは　うごいては　いけない</p>
+  <div class="eyebox" id="eye">
+    <canvas id="eyecv" width="840" height="420"></canvas>
+    <div class="lid top"></div><div class="lid bot"></div>
+  </div>
+  <div class="state" id="state">……</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="dist" id="dist">でぐちまで　100m</div>
+  <button type="button" id="hold">おして　すすむ</button>
+  <button type="button" id="exit" class="btn hidden">そとへ</button>
+  <p class="err" id="err"></p>
+</div>
+<div class="footer-ver" data-dwd-ver></div>
+
+<script src="../../assets/dwd.js"></script>
+<script>
+(function () {
+  'use strict';
+  DWD.noiseBg(0.05);
+  // 目を描く
+  var cv = document.getElementById('eyecv');
+  DWD.drawEye(cv.getContext('2d'), cv.width, cv.height);
+
+  var eye = document.getElementById('eye');
+  var stateEl = document.getElementById('state');
+  var bar = document.getElementById('bar');
+  var dist = document.getElementById('dist');
+  var hold = document.getElementById('hold');
+  var err = document.getElementById('err');
+
+  var progress = 0;        // 0〜100
+  var holding = false;
+  var mode = 'closed';     // closed / peek / open
+  var openedAt = 0;
+  var running = false;
+  var paused = false;
+  var finished = false;
+  var blackoutDone = false;
+  var drone;
+
+  // 押している間だけ進む（マウス・タッチ両対応）
+  function down(e) { e.preventDefault(); if (!running || finished) return; holding = true; hold.classList.add('on'); }
+  function up() { holding = false; hold.classList.remove('on'); }
+  hold.addEventListener('pointerdown', down);
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { hold.addEventListener(ev, up); });
+  hold.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  // キーボード（スペース）でも可
+  document.addEventListener('keydown', function (e) { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); down(e); } });
+  document.addEventListener('keyup', function (e) { if (e.code === 'Space') up(); });
+
+  function setMode(m) {
+    mode = m;
+    eye.classList.toggle('peek', m === 'peek');
+    eye.classList.toggle('open', m === 'open');
+    stateEl.classList.toggle('danger', m !== 'closed');
+    stateEl.textContent = m === 'closed' ? '……　とじている' : m === 'peek' ? '！' : 'みている';
+    if (m === 'open') openedAt = performance.now();
+  }
+
+  // 目のサイクル：とじる → (予兆) → ひらく → とじる …
+  function cycle() {
+    if (finished) return;
+    if (paused) return setTimeout(cycle, 300);
+    setMode('closed');
+    var closedFor = DWD.rand(1600, 4200) * (progress > 60 ? 0.75 : 1);
+    setTimeout(function () {
+      if (finished) return;
+      if (paused) return cycle();
+      setMode('peek');
+      DWD.sfx.heartbeat(1);
+      setTimeout(function () {
+        if (finished) return;
+        setMode('open');
+        DWD.sfx.static(0.1, 0.15);
+        setTimeout(cycle, DWD.rand(1200, 2600));
+      }, progress > 60 ? 520 : 720);
+    }, closedFor);
+  }
+
+  var last = performance.now();
+  function loop(t) {
+    var dt = Math.min(0.1, (t - last) / 1000);
+    last = t;
+    if (running && !paused && !finished && !DWD.isScaring()) {
+      if (holding) {
+        // 目が開いてから 0.15 秒の猶予
+        if (mode === 'open' && t - openedAt > 150) {
+          caught();
+        } else {
+          progress = Math.min(100, progress + dt * 11);
+          if (Math.random() < dt * 3) DWD.sfx.blip();
+        }
+      }
+      if (progress >= 88 && !blackoutDone) blackout();
+      if (progress >= 100) finish();
+      bar.style.width = progress + '%';
+      dist.textContent = 'でぐちまで　' + Math.ceil(100 - progress) + 'm';
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function caught() {
+    up();
+    DWD.inc('miss');
+    progress = Math.max(0, progress - 30);
+    err.textContent = DWD.pick(['みてたよ', 'うごいた', 'にがさない', 'みえてる']);
+    DWD.scare({ type: DWD.pick(['eye', 'face']), dur: 1200 });
+  }
+
+  // 出口目前で、明かりが消える
+  function blackout() {
+    blackoutDone = true;
+    paused = true;
+    up();
+    var b = document.createElement('div');
+    b.className = 'blackout';
+    document.body.appendChild(b);
+    DWD.sfx.whisper(2.4);
+    DWD.type(b, 'ゆきを　おいていくの？', 140).then(function () {
+      return DWD.wait(1200);
+    }).then(function () {
+      b.textContent = '';
+      DWD.sfx.knock(3, 0.25);
+      return DWD.wait(900);
+    }).then(function () {
+      b.remove();
+      paused = false;
+    });
+  }
+
+  function finish() {
+    finished = true;
+    up();
+    setMode('closed');
+    stateEl.textContent = 'ねむった';
+    hold.classList.add('hidden');
+    dist.textContent = 'でぐち';
+    var ex = document.getElementById('exit');
+    ex.classList.remove('hidden');
+    ex.addEventListener('click', function () {
+      if (drone) drone.stop();
+      DWD.set('escaped', true);
+      var w = document.createElement('div');
+      w.className = 'white';
+      w.innerHTML = '<h2>脱出成功</h2><p>DarkWebDark から　ぬけだした。</p><p style="font-size:13px;color:#888">表の世界へ　もどります…</p>';
+      document.body.appendChild(w);
+      DWD.sfx.chime();
+      setTimeout(function () { location.href = '../../index.html'; }, 3600);
+    }, { once: true });
+  }
+
+  DWD.gate({ title: 'LAYER 05　さいごの　へや', button: 'おりる', warn: 'ボタンを押している間だけ進みます<br>（PCはスペースキーでも可）' }).then(function () {
+    drone = DWD.drone(0.2);
+    running = true;
+    cycle();
+    requestAnimationFrame(loop);
+    // 遊んでいる間も時々サブリミナル
+    DWD.haunt({ min: 14000, max: 26000, big: false, paused: function () { return holding || paused; } });
+  });
+})();
+</script>
+</body>
+</html>

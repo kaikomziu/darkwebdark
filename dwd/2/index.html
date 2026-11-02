@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DarkWebDark/2</title>
+<link rel="stylesheet" href="../../assets/dark.css">
+<style>
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 22px 0; }
+  .ph { aspect-ratio: 1; background: #000; border: 1px solid #1d1714; cursor: pointer; padding: 0; position: relative; overflow: hidden; }
+  .ph canvas { width: 100%; height: 100%; display: block; filter: grayscale(.6) contrast(1.1); transition: filter .2s; }
+  .ph:hover canvas { filter: none; }
+  .ph span { position: absolute; left: 6px; bottom: 4px; font: 11px "Courier New", monospace; color: #888; }
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; gap: 14px; }
+  .modal canvas { width: min(560px, 92vw); max-height: 60vh; aspect-ratio: 1; object-fit: contain; border: 1px solid #222; }
+  .modal .cap { letter-spacing: .2em; text-align: center; font-size: 16px; min-height: 1.6em; }
+  .modal .close { position: absolute; top: 10px; right: 14px; font-size: 28px; background: none; border: 0; color: #777; cursor: pointer; padding: 8px; }
+  .answer { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div class="page">
+  <div class="layer">LAYER 02 / 写真</div>
+  <h1 class="logo">DarkWebDark/2</h1>
+  <p class="msg" id="m1">ゆきが　さいごに　とった　しゃしん</p>
+  <p class="msg dim" id="m2">あの子を　さがして。　なまえを　よんで</p>
+  <div class="grid" id="grid"></div>
+</div>
+<div class="footer-ver" data-dwd-ver></div>
+
+<div class="modal hidden" id="modal">
+  <button class="close" id="close" aria-label="閉じる">×</button>
+  <canvas id="big" width="600" height="600"></canvas>
+  <div class="cap" id="cap"></div>
+  <form class="answer hidden" id="answer">
+    <input class="input" id="name" placeholder="なまえ" autocomplete="off" maxlength="12">
+    <button class="btn">よぶ</button>
+  </form>
+  <p class="err" id="err"></p>
+</div>
+
+<script src="../../assets/dwd.js"></script>
+<script>
+(function () {
+  'use strict';
+  DWD.noiseBg(0.06);
+
+  /* ---- 写真をキャンバスで描く ---- */
+  function base(c, w, h, col) {
+    c.fillStyle = col || '#0b0b0d';
+    c.fillRect(0, 0, w, h);
+  }
+  function grain(c, w, h, a) {
+    for (var i = 0; i < 5000; i++) {
+      c.fillStyle = 'rgba(255,255,255,' + Math.random() * (a || 0.08) + ')';
+      c.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+    }
+  }
+  function stamp(c, w, h, t) {
+    c.fillStyle = '#e8a030';
+    c.font = 'bold ' + Math.round(w * 0.045) + 'px monospace';
+    c.textAlign = 'right';
+    c.fillText(t, w - 14, h - 14);
+    c.textAlign = 'left';
+  }
+  function figure(c, x, y, s, col) {
+    c.fillStyle = col || '#000';
+    c.beginPath();
+    c.arc(x, y, s * 0.18, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.moveTo(x - s * 0.22, y + s * 0.2);
+    c.lineTo(x + s * 0.22, y + s * 0.2);
+    c.lineTo(x + s * 0.3, y + s * 1.1);
+    c.lineTo(x - s * 0.3, y + s * 1.1);
+    c.fill();
+    // 長すぎる腕
+    c.fillRect(x - s * 0.3, y + s * 0.22, s * 0.07, s * 1.2);
+    c.fillRect(x + s * 0.23, y + s * 0.22, s * 0.07, s * 1.2);
+  }
+  function paleFace(c, x, y, s) {
+    c.fillStyle = 'rgba(220,214,200,.85)';
+    c.beginPath();
+    c.ellipse(x, y, s * 0.7, s, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#000';
+    c.beginPath();
+    c.ellipse(x - s * 0.28, y - s * 0.15, s * 0.16, s * 0.22, 0, 0, Math.PI * 2);
+    c.ellipse(x + s * 0.28, y - s * 0.15, s * 0.16, s * 0.22, 0, 0, Math.PI * 2);
+    c.ellipse(x, y + s * 0.5, s * 0.14, s * 0.28, 0, 0, Math.PI * 2);
+    c.fill();
+  }
+  var PH = [
+    { t: '203号室', cap: 'となりの　へや。　ずっと　あいてる', draw: function (c, w, h) {
+      base(c, w, h, '#14110f');
+      c.fillStyle = '#2a221d'; c.fillRect(w * .28, h * .12, w * .44, h * .8);
+      c.fillStyle = '#7a6a50'; c.font = 'bold ' + w * .08 + 'px serif'; c.textAlign = 'center'; c.fillText('203', w * .5, h * .3); c.textAlign = 'left';
+      c.fillStyle = '#a99a7a'; c.beginPath(); c.arc(w * .64, h * .55, w * .02, 0, 7); c.fill();
+      c.fillStyle = 'rgba(0,0,0,.9)'; c.fillRect(w * .28, h * .88, w * .44, h * .04);
+      c.fillStyle = 'rgba(200,190,170,.5)'; for (var i = 0; i < 4; i++) c.fillRect(w * (.4 + i * .04), h * .88, w * .015, h * .03);
+      stamp(c, w, h, '10/30 02:13');
+    } },
+    { t: 'まど', cap: 'まどの　そと。　ここは　2かい', scareOn: 2, draw: function (c, w, h) {
+      base(c, w, h, '#06080d');
+      c.strokeStyle = '#33302a'; c.lineWidth = w * .03; c.strokeRect(w * .15, h * .12, w * .7, h * .72);
+      c.beginPath(); c.moveTo(w * .5, h * .12); c.lineTo(w * .5, h * .84); c.stroke();
+      paleFace(c, w * .66, h * .42, w * .07);
+      stamp(c, w, h, '10/30 02:41');
+    } },
+    { t: 'クロ', cap: 'この子の　なまえを　よんで', answer: true, draw: function (c, w, h) {
+      base(c, w, h, '#020202');
+      [[.5, .5]].forEach(function (p) {
+        c.fillStyle = '#d9cc3a'; c.shadowColor = '#cfc030'; c.shadowBlur = 20;
+        c.beginPath(); c.ellipse(w * (p[0] - .07), h * p[1], w * .035, w * .045, 0, 0, 7); c.ellipse(w * (p[0] + .07), h * p[1], w * .035, w * .045, 0, 0, 7); c.fill();
+        c.shadowBlur = 0; c.fillStyle = '#000'; c.fillRect(w * (p[0] - .075), h * p[1] - w * .04, w * .01, w * .08); c.fillRect(w * (p[0] + .065), h * p[1] - w * .04, w * .01, w * .08);
+      });
+      c.fillStyle = '#7a0000'; c.fillRect(w * .4, h * .63, w * .2, h * .025);
+      stamp(c, w, h, '10/31 00:00');
+    } },
+    { t: 'かべ', cap: 'かべの　うちがわ', draw: function (c, w, h) {
+      base(c, w, h, '#2a2620');
+      c.fillStyle = 'rgba(120,0,0,.75)'; c.font = w * .07 + 'px serif';
+      for (var y = 1; y < 12; y++) for (var x = 0; x < 6; x++) if (Math.random() < .7) c.fillText(Math.random() < .5 ? 'あけて' : 'ゆき', x * w * .18 + Math.random() * 10, y * h * .085);
+      c.strokeStyle = 'rgba(0,0,0,.6)'; c.lineWidth = 3;
+      for (var i = 0; i < 30; i++) { var sx = Math.random() * w; c.beginPath(); c.moveTo(sx, h * .5); c.lineTo(sx + 8, h * .9); c.stroke(); }
+      stamp(c, w, h, '10/29 02:13');
+    } },
+    { t: 'ろうか', cap: 'だれか　いる', scareOn: 3, draw: function (c, w, h) {
+      base(c, w, h, '#0a0a0a');
+      for (var i = 0; i < 7; i++) { var k = i / 7; c.strokeStyle = 'rgba(160,150,130,' + (0.4 - k * 0.3) + ')'; c.strokeRect(w * (.5 - .45 * (1 - k)), h * (.5 - .45 * (1 - k)), w * .9 * (1 - k), h * .9 * (1 - k)); }
+      figure(c, w * .5, h * .45, w * .08, '#000');
+      stamp(c, w, h, '10/31 01:58');
+    } },
+    { t: 'あなた', cap: 'これは　いま', youPhoto: true, draw: function (c, w, h) {
+      base(c, w, h, '#050505');
+      var g = c.createRadialGradient(w * .5, h * .55, 5, w * .5, h * .55, w * .4); g.addColorStop(0, 'rgba(140,170,220,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#000'; c.beginPath(); c.arc(w * .5, h * .62, w * .13, 0, 7); c.fill(); c.fillRect(w * .3, h * .7, w * .4, h * .3);
+      paleFace(c, w * .74, h * .32, w * .06);
+      var d = new Date(); stamp(c, w, h, (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2));
+    } },
+    { t: 'て', cap: 'まどに　たくさん', draw: function (c, w, h) {
+      base(c, w, h, '#0c0f12');
+      c.fillStyle = 'rgba(230,225,215,.18)';
+      for (var i = 0; i < 26; i++) { var x = Math.random() * w, y = Math.random() * h; c.beginPath(); c.ellipse(x, y, w * .03, w * .04, 0, 0, 7); c.fill(); for (var k = -2; k <= 2; k++) c.fillRect(x + k * w * .013, y - w * .09, w * .009, w * .055); }
+      stamp(c, w, h, '10/31 02:02');
+    } },
+    { t: '　', cap: '　', scareOn: 1, draw: function (c, w, h) {
+      base(c, w, h, '#000');
+      stamp(c, w, h, '--/-- --:--');
+    } },
+    { t: 'ゆき', cap: 'ゆきは　まだ　ここに　いる', draw: function (c, w, h) {
+      base(c, w, h, '#120c0c');
+      figure(c, w * .5, h * .25, w * .3, 'rgba(0,0,0,.95)');
+      c.fillStyle = 'rgba(80,50,30,.9)'; c.beginPath(); c.arc(w * .5, h * .25, w * .07, Math.PI, 0); c.fill();
+      stamp(c, w, h, '10/31 03:03');
+    } }
+  ];
+
+  var grid = document.getElementById('grid');
+  PH.forEach(function (p, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ph';
+    var cv = document.createElement('canvas');
+    cv.width = cv.height = 240;
+    p.draw(cv.getContext('2d'), 240, 240);
+    grain(cv.getContext('2d'), 240, 240);
+    b.appendChild(cv);
+    var s = document.createElement('span');
+    s.textContent = 'IMG_0' + (203 + i);
+    b.appendChild(s);
+    b.addEventListener('click', function () { open(i); });
+    grid.appendChild(b);
+    p.views = 0;
+  });
+
+  var modal = document.getElementById('modal');
+  var big = document.getElementById('big');
+  var cap = document.getElementById('cap');
+  var ans = document.getElementById('answer');
+  var err = document.getElementById('err');
+  var openCount = 0;
+
+  function open(i) {
+    if (DWD.isScaring()) return;
+    var p = PH[i];
+    p.views++;
+    openCount++;
+    var c = big.getContext('2d');
+    p.draw(c, 600, 600);
+    grain(c, 600, 600, 0.1);
+    modal.classList.remove('hidden');
+    ans.classList.toggle('hidden', !p.answer);
+    err.textContent = '';
+    cap.textContent = '';
+    DWD.sfx.static(0.15, 0.2);
+    DWD.type(cap, p.cap, 90);
+    if (p.youPhoto) setTimeout(function () { DWD.sfx.breath(); }, 800);
+    // 写真によっては、見た回数で驚かし
+    if (p.scareOn && p.views === p.scareOn) {
+      setTimeout(function () {
+        DWD.scare({ type: p.t === 'まど' ? 'face' : DWD.pick(['face', 'eye']) });
+      }, DWD.rand(700, 1600));
+    } else if (openCount % 5 === 0) {
+      setTimeout(function () { DWD.flash(90); }, 600);
+    }
+    if (p.answer) setTimeout(function () { document.getElementById('name').focus(); }, 200);
+  }
+  function close() { modal.classList.add('hidden'); }
+  document.getElementById('close').addEventListener('click', close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+  var tries = 0;
+  ans.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = document.getElementById('name').value.trim().toLowerCase();
+    if (['くろ', 'クロ', 'kuro', 'ｸﾛ', '黒'].indexOf(v) >= 0) {
+      cap.textContent = 'ニャア';
+      DWD.sfx.whisper(1.2);
+      DWD.set('layer', Math.max(DWD.get('layer') || 0, 3));
+      setTimeout(function () { DWD.go('../3/index.html', 1200); }, 1300);
+      return;
+    }
+    tries++;
+    DWD.inc('miss');
+    if (tries % 2 === 0) {
+      DWD.scare({ type: 'text', text: 'ちがう' });
+    } else {
+      DWD.sfx.blip();
+      err.textContent = DWD.pick(['その子じゃない', 'ゆきは　なんて　よんでた？', 'くろい　ねこ']);
+    }
+  });
+
+  DWD.gate({ title: 'LAYER 02 に　おりますか', button: 'おりる' }).then(function () {
+    DWD.drone(0.17);
+    DWD.sfx.knock(3);
+    DWD.haunt({ min: 11000, max: 22000, bigChance: 0.2, paused: function () { return !modal.classList.contains('hidden'); } });
+  });
+})();
+</script>
+</body>
+</html>
